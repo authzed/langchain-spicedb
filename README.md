@@ -35,18 +35,17 @@ Add an authorization node to a stateful LangGraph workflow to enforce permission
 
 ## Installation
 
+The project isn't on PyPi yet so you can pull from the GitHub repo directly like:
+
 ```bash
-# With LangChain support
-pip install spicedb-rag-auth[langchain]
+pip install "git+https://github.com/sohanmaheshwar/spicedb-rag-authorization.git#egg=spicedb-rag-auth[all]"
+```
 
-# With LangGraph support
-pip install spicedb-rag-auth[langgraph]
+Alternatively, you can clone the repo locally and import it into your code like this:
 
-# With both LangChain and LangGraph
-pip install spicedb-rag-auth[all]
-
-# For development
-pip install -e ".[dev]"
+```
+import sys
+sys.path.append('/path_to/spicedb-rag-authorization')
 ```
 
 ## Quick Start

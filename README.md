@@ -1,17 +1,16 @@
 # SpiceDB RAG Authorization
 
-A universal, framework-agnostic authorization library for RAG (Retrieval-Augmented Generation) pipelines using SpiceDB. Works seamlessly with any framework (LangChain, LangGraph, custom pipelines) and any vector store (Pinecone, FAISS, Weaviate, Chroma, etc.).
+Authorization library for RAG (Retrieval-Augmented Generation) pipelines using SpiceDB. Designed for LangChain and LangGraph integrations with support for any vector store (Pinecone, FAISS, Weaviate, Chroma, etc.).
 
 **NOTE:** This is very much in alpha mode and is intended as a learning exercise rather than a production deployment. I've tested it against the `langchain_example.py` and also the SpiceDB - RAG example in the `authzed/workshops` [repo here](https://github.com/authzed/workshops/blob/main/secure-rag-pipelines/01-rag.ipynb)
 
 ## Features
 
-- **Universal Compatibility**: Works with any RAG framework or custom implementation
+- **LangChain & LangGraph Integration**: First-class support for modern LLM frameworks
 - **Vector Store Agnostic**: Compatible with Pinecone, FAISS, Weaviate, Chroma, and more
 - **Post-Filter Authorization**: Filters retrieved documents based on SpiceDB permissions
 - **Batch Processing**: Optimized concurrent permission checks for performance
 - **Observable**: Returns detailed metrics about authorization decisions
-- **Multiple Interfaces**: Use as standalone, LangChain Runnable, or LangGraph node
 - **Type-Safe**: Full type hints for better IDE support
 - **Async by Default**: Built for high-performance async operations
 
@@ -21,38 +20,29 @@ Most RAG pipelines retrieve documents without considering user permissions. This
 
 1. **Post-retrieval filtering**: Retrieve best semantic matches first, then filter by permissions
 2. **Deterministic authorization**: Every document is checked against SpiceDB before being used
-3. **Zero vendor lock-in**: Not tied to any specific framework or vector store
-4. **Drop-in integration**: Minimal code changes to existing pipelines
+3. **Framework integration**: Native LangChain and LangGraph components for seamless integration
+4. **Vector store agnostic**: Not tied to any specific vector database
 
 ## Overview
 
-There are four ways to integrate SpiceDB authorization into a RAG pipeline, from this repo. All modes perform post-retrieval, per-document authorization using SpiceDB based on a resource_id in document metadata.
+This library provides two ways to integrate SpiceDB authorization into RAG pipelines. Both modes perform post-retrieval, per-document authorization using SpiceDB based on a resource_id in document metadata.
 
-1. Standalone
-Directly call the authorizer in your own code for maximum flexibility outside any framework.
-
-2. Jupyter Notebook
-Drop-in wrapper for notebook workflows, enabling quick prototyping with minimal refactoring.
-
-3. LangChain
+1. **LangChain Integration**
 Use first-class Runnable components (SpiceDBAuthFilter / SpiceDBAuthLambda) to integrate authorization directly into LangChain pipelines or AI workflows
 
-4. LangGraph
+2. **LangGraph Integration**
 Add an authorization node to a stateful LangGraph workflow to enforce permission checks within complex, multi-step graphs or AI Agents.
 
 ## Installation
 
 ```bash
-# Basic installation (works standalone)
-pip install spicedb-rag-auth
-
 # With LangChain support
 pip install spicedb-rag-auth[langchain]
 
 # With LangGraph support
 pip install spicedb-rag-auth[langgraph]
 
-# With everything
+# With both LangChain and LangGraph
 pip install spicedb-rag-auth[all]
 
 # For development
@@ -100,108 +90,16 @@ from authzed.api.v1 import WriteRelationshipsRequest, RelationshipUpdate, Relati
 
 ## Usage
 
-### Standalone (Framework-Agnostic)
-
-Perfect for Jupyter notebooks or custom RAG pipelines:
-
-```python
-from spicedb_rag_auth import SpiceDBAuthorizer
-
-# Initialize authorizer
-authorizer = SpiceDBAuthorizer(
-    spicedb_endpoint="localhost:50051",
-    spicedb_token="sometoken",
-    resource_type="article",
-    subject_type="user",
-    permission="view",
-    resource_id_key="article_id",  # Key in your document metadata
-)
-
-# Your existing retrieval code
-documents = await vector_store.similarity_search(query, k=10)
-
-# Filter by permissions
-result = await authorizer.filter_documents(
-    documents=documents,
-    subject_id="alice",  # The user making the request
-)
-
-# Use authorized documents
-print(f"Authorized {result.total_authorized}/{result.total_retrieved}")
-authorized_docs = result.authorized_documents
-
-# Generate response with authorized docs only
-response = await llm.generate(authorized_docs, query)
-```
-
-### Jupyter Notebook Integration
-
-Drop-in replacement for your existing Jupyter notebook RAG pipeline:
-
-```python
-from spicedb_rag_auth import SpiceDBAuthorizer
-
-# Your existing setup
-docsearch = PineconeVectorStore.from_existing_index(...)
-retriever = docsearch.as_retriever(search_kwargs={"k": 4})
-llm = ChatOpenAI(...)
-
-# Replace your custom filter function with this:
-authorizer = SpiceDBAuthorizer(
-    spicedb_endpoint="localhost:50051",
-    spicedb_token="sometoken",
-    resource_type="article",
-    resource_id_key="article_id",
-)
-
-async def filter_docs_with_spicedb(docs):
-    """Drop-in replacement for your existing filter"""
-    result = await authorizer.filter_documents(docs, subject_id="tim")
-    return result.authorized_documents
-
-# Your existing chain (NO OTHER CHANGES NEEDED!)
-chain = (
-    RunnableParallel({
-        "context": retriever | RunnableLambda(filter_docs_with_spicedb),
-        "question": RunnablePassthrough(),
-    })
-    | prompt
-    | llm
-    | StrOutputParser()
-)
-
-answer = await chain.ainvoke("Your question?")
-```
-
 ### LangChain Integration
 
-Use as a Runnable in LangChain chains:
+Use as a Runnable in LangChain chains.
 
 ```python
 from spicedb_rag_auth import SpiceDBAuthFilter
 from langchain_core.runnables import RunnableParallel, RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 
-# Option 1: Pass subject_id in constructor (recommended)
-auth = SpiceDBAuthFilter(
-    spicedb_endpoint="localhost:50051",
-    spicedb_token="sometoken",
-    resource_type="article",
-    resource_id_key="article_id",
-    subject_id="alice",  # Set the user here
-)
-
-chain = (
-    RunnableParallel({
-        "context": retriever | auth,
-        "question": RunnablePassthrough(),
-    })
-    | prompt
-    | llm
-    | StrOutputParser()
-)
-
-# Option 2: Pass subject_id at runtime
+# Initialize auth filter (no subject_id yet)
 auth = SpiceDBAuthFilter(
     spicedb_endpoint="localhost:50051",
     spicedb_token="sometoken",
@@ -209,9 +107,10 @@ auth = SpiceDBAuthFilter(
     resource_id_key="article_id",
 )
 
+# Build your chain once
 chain = (
     RunnableParallel({
-        "context": retriever | auth,
+        "context": retriever | auth,  # Authorization happens here
         "question": RunnablePassthrough(),
     })
     | prompt
@@ -219,31 +118,16 @@ chain = (
     | StrOutputParser()
 )
 
-# Invoke with config
+# Pass user at runtime - reuse same chain for different users
 answer = await chain.ainvoke(
     "Your question?",
     config={"configurable": {"subject_id": "alice"}}
 )
 
-# Or with RunnableLambda (simpler for single user)
-from spicedb_rag_auth import SpiceDBAuthLambda
-
-auth_lambda = SpiceDBAuthLambda(
-    spicedb_endpoint="localhost:50051",
-    spicedb_token="sometoken",
-    resource_type="article",
-    resource_id_key="article_id",
-    subject_id="alice",
-)
-
-chain = (
-    RunnableParallel({
-        "context": retriever | RunnableLambda(auth_lambda),
-        "question": RunnablePassthrough(),
-    })
-    | prompt
-    | llm
-    | StrOutputParser()
+# Different user, same chain
+answer = await chain.ainvoke(
+    "Another question?",
+    config={"configurable": {"subject_id": "bob"}}
 )
 ```
 
@@ -332,6 +216,70 @@ graph = StateGraph(RAGAuthState)
 graph.add_node("authorize", auth_node)
 ```
 
+### Understanding LangGraph Integration Options
+
+The library provides three approaches for LangGraph integration, each suited for different use cases:
+
+#### **Option 1: Basic Usage** (shown in main example above)
+Use the provided `RAGAuthState` and `create_auth_node()` function. This is the **simplest approach** for basic RAG pipelines.
+
+**When to use:** Simple RAG workflows with standard state fields.
+
+#### **Option 2: Extend RAGAuthState**
+Add custom fields to track additional state like conversation history, user preferences, or metadata.
+
+```python
+class ConversationalRAGState(RAGAuthState):
+    conversation_history: list  # Track previous Q&A
+    user_preferences: dict      # User settings
+    session_id: str            # Session tracking
+```
+
+**When to use:**
+- Multi-turn conversations that need history
+- Personalized responses based on user preferences
+- Complex workflows requiring additional context
+
+**Example use case:** A chatbot that remembers previous questions and tailors responses based on user role (engineer vs. manager).
+
+#### **Option 3: Class-Based AuthorizationNode**
+Create reusable authorization node instances that can be shared across multiple graphs or configured with custom state key mappings.
+
+```python
+# Define once, reuse everywhere
+article_auth = AuthorizationNode(resource_type="article", ...)
+video_auth = AuthorizationNode(resource_type="video", ...)
+
+# Use in multiple graphs
+blog_graph.add_node("auth", article_auth)
+media_graph.add_node("auth", video_auth)
+learning_graph.add_node("auth_articles", article_auth)  # Reuse!
+```
+
+**When to use:**
+- Multiple graphs need the same authorization logic
+- Your state uses different key names than the defaults
+- Building testable code (easy to swap prod/test instances)
+- Team collaboration (security team provides authZ nodes)
+
+**Example use case:** A multi-resource platform (articles, videos, code snippets) where each resource type has its own auth node that's reused across different workflows.
+
+For production applications, you'll often use a mix of Option 2 and 3: A custom state for your workflow + reusable authZ nodes for flexibility.
+
+```python
+class CustomerSupportState(RAGAuthState):
+    conversation_history: list
+    customer_tier: str
+    sentiment_score: float
+
+docs_auth = AuthorizationNode(resource_type="support_doc", ...)
+kb_auth = AuthorizationNode(resource_type="knowledge_base", ...)
+
+graph = StateGraph(CustomerSupportState)
+graph.add_node("auth_docs", docs_auth)
+graph.add_node("auth_kb", kb_auth)
+```
+
 ## Configuration
 
 ### Basic Configuration
@@ -390,22 +338,6 @@ Works with any document format that has a `.metadata` dict attribute (LangChain 
 
 ## Authorization Results
 
-### Standalone Usage
-
-When using `SpiceDBAuthorizer` directly, `filter_documents` returns detailed metrics:
-
-```python
-authorizer = SpiceDBAuthorizer(...)
-result = await authorizer.filter_documents(docs, subject_id="alice")
-
-print(result.authorized_documents)      # List of authorized docs
-print(result.total_retrieved)           # Total docs checked
-print(result.total_authorized)          # Docs that passed
-print(result.authorization_rate)        # Percentage (0.0 to 1.0)
-print(result.denied_resource_ids)       # List of denied IDs
-print(result.check_latency_ms)          # Time spent on checks
-```
-
 ### LangChain Integration
 
 By default, `SpiceDBAuthFilter` returns only the authorized documents. To get metrics, set `return_metrics=True`:
@@ -444,14 +376,58 @@ print(result["auth_results"]["denied_resource_ids"])
 print(result["auth_results"]["check_latency_ms"])
 ```
 
+## Visualizing the LangGraph (Teaching & Debugging)
+
+When teaching or debugging, you can prove the authorization node exists in the graph:
+
+```python
+from langgraph.graph import StateGraph, END
+from spicedb_rag_auth import create_auth_node, RAGAuthState
+
+graph = StateGraph(RAGAuthState)
+
+# Add nodes
+graph.add_node("retrieve", retrieve_node)
+graph.add_node("authorize", create_auth_node(...))
+graph.add_node("generate", generate_node)
+
+# Add edges
+graph.set_entry_point("retrieve")
+graph.add_edge("retrieve", "authorize")
+graph.add_edge("authorize", "generate")
+graph.add_edge("generate", END)
+
+# Compile
+app = graph.compile()
+
+# Method 1: Inspect nodes
+print("Nodes:", list(graph.nodes.keys()))
+# Output: ['retrieve', 'authorize', 'generate']
+
+# Method 2: Inspect edges (execution flow)
+print("Edges:", graph.edges)
+# Shows: retrieve → authorize → generate → END
+
+# Method 3: Generate Mermaid diagram
+mermaid = app.get_graph().draw_mermaid()
+print(mermaid)
+# Copy to https://mermaid.live to visualize
+
+# Method 4: Trace execution with metrics
+result = await app.ainvoke({"question": "...", "subject_id": "alice"})
+print(f"Retrieved: {result['auth_results']['total_retrieved']}")
+print(f"Authorized: {result['auth_results']['total_authorized']}")
+# Proves authorization node executed
+```
+
+See `examples/langgraph_visualization_example.py` for a complete demonstration with 7 different methods to prove and visualize the authorization node.
+
 ## Examples
 
 See the `examples/` directory for complete working examples:
 
-- `standalone_example.py` - Basic usage without any framework
-- `jupyter_notebook_example.py` - Integration with Jupyter notebooks
 - `langchain_example.py` - LangChain integration
-- More examples coming soon!
+- `langgraph_visualization_example.py` - **Visualizing and proving the authorization node**
 
 ## Performance Considerations
 
@@ -460,12 +436,6 @@ See the `examples/` directory for complete working examples:
 - **Connection Reuse**: SpiceDB client is reused across checks
 - **Async Operations**: All operations are async for better performance
 
-### Benchmarks
-
-On a local SpiceDB instance:
-- ~10-20ms per batch of 10 documents
-- Scales linearly with number of documents
-- Network latency is the primary bottleneck
 
 ## Vector Store Compatibility
 
@@ -481,12 +451,8 @@ Works with any vector store that returns documents with metadata:
 
 ## Framework Compatibility
 
-- ✅ Standalone (no framework)
 - ✅ LangChain
 - ✅ LangGraph
-- ✅ Custom RAG pipelines
-- ✅ Jupyter notebooks
-- ✅ FastAPI applications
 
 ## Error Handling
 
@@ -536,8 +502,8 @@ retriever = vectorstore.as_retriever(
 )
 ```
 
-**Pros**: More efficient (It Depends ™️) fewer documents retrieved
-**Cons**: Requires knowing authorized docs upfront, may miss relevant results
+**Pros**: More efficient (It Depends ™️), fewer documents retrieved 
+**Cons**: Requires knowing authorized docs upfront, may miss relevant results, `LookupResources` API in SpiceDB can be computationally expensive depending on the number of relationships, shape of schema etc.
 
 ### Post-Filter (This Package)
 ```python

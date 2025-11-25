@@ -1,21 +1,9 @@
 """
 SpiceDB RAG Authorization
 
-A universal authorization library for RAG pipelines using SpiceDB.
-Works with any framework (LangChain, LangGraph) and any vector store
+Authorization library for RAG pipelines using SpiceDB.
+Designed for LangChain and LangGraph integrations with support for any vector store
 (Pinecone, FAISS, Weaviate, etc.).
-
-Example (Standalone):
-    >>> from spicedb_rag_auth import SpiceDBAuthorizer
-    >>>
-    >>> authorizer = SpiceDBAuthorizer(
-    ...     spicedb_endpoint="localhost:50051",
-    ...     spicedb_token="sometoken",
-    ...     resource_type="article",
-    ... )
-    >>>
-    >>> result = await authorizer.filter_documents(docs, subject_id="alice")
-    >>> print(f"Authorized {result.total_authorized}/{result.total_retrieved}")
 
 Example (LangChain):
     >>> from spicedb_rag_auth import SpiceDBAuthFilter
@@ -41,25 +29,22 @@ Example (LangGraph):
 
 __version__ = "0.1.0"
 
-from .core import SpiceDBAuthorizer, AuthorizationResult
-
+# Import LangChain components (if available)
 try:
     from .langchain_runnable import SpiceDBAuthFilter, SpiceDBAuthLambda
     _has_langchain = True
 except ImportError:
     _has_langchain = False
 
+# Import LangGraph components (if available)
 try:
     from .langgraph_node import create_auth_node, AuthorizationNode, RAGAuthState
     _has_langgraph = True
 except ImportError:
     _has_langgraph = False
 
-
-__all__ = [
-    "SpiceDBAuthorizer",
-    "AuthorizationResult",
-]
+# Define public API - only LangChain and LangGraph components
+__all__ = []
 
 if _has_langchain:
     __all__.extend(["SpiceDBAuthFilter", "SpiceDBAuthLambda"])

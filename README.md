@@ -286,7 +286,7 @@ graph.add_node("auth_kb", kb_auth)
 ```python
 authorizer = SpiceDBAuthorizer(
     spicedb_endpoint="localhost:50051",  # SpiceDB address
-    spicedb_token="sometoken",                 # Pre-shared key
+    spicedb_token="sometoken",           # Pre-shared key
     resource_type="article",             # Your resource type
     subject_type="user",                 # Your subject type
     permission="view",                   # Permission to check

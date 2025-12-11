@@ -36,6 +36,19 @@ try:
 except ImportError:
     _has_langchain = False
 
+# Import LangChain standard components (retrievers, tools)
+try:
+    from .retrievers import SpiceDBRetriever
+    _has_retrievers = True
+except ImportError:
+    _has_retrievers = False
+
+try:
+    from .tools import SpiceDBPermissionTool, SpiceDBBulkPermissionTool
+    _has_tools = True
+except ImportError:
+    _has_tools = False
+
 # Import LangGraph components (if available)
 try:
     from .langgraph_node import create_auth_node, AuthorizationNode, RAGAuthState
@@ -48,6 +61,12 @@ __all__ = []
 
 if _has_langchain:
     __all__.extend(["SpiceDBAuthFilter", "SpiceDBAuthLambda"])
+
+if _has_retrievers:
+    __all__.extend(["SpiceDBRetriever"])
+
+if _has_tools:
+    __all__.extend(["SpiceDBPermissionTool", "SpiceDBBulkPermissionTool"])
 
 if _has_langgraph:
     __all__.extend(["create_auth_node", "AuthorizationNode", "RAGAuthState"])

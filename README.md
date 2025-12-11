@@ -241,7 +241,7 @@ class ConversationalRAGState(RAGAuthState):
 
 **Example use case:** A chatbot that remembers previous questions and tailors responses based on user role (engineer vs. manager).
 
-#### **Option 3: Class-Based AuthorizationNode**
+#### **Option 3: Class-Based Authorization Node**
 Create reusable authorization node instances that can be shared across multiple graphs or configured with custom state key mappings.
 
 ```python

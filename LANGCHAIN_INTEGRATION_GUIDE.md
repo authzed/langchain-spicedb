@@ -581,7 +581,6 @@ python -m twine upload dist/*
 - LangGraph nodes - Bonus feature
 
 ✅ **Follows LangChain Patterns**:
-- Matches Permit.io structure
 - Implements standard interfaces
 - Provides multiple integration points
 
@@ -604,7 +603,7 @@ python -m twine upload dist/*
 
 1. **Post-filter approach** - Better semantic matches than pre-filter
 2. **Middleware pattern** - More flexible than wrapping retrievers
-3. **LangGraph support** - Permit doesn't have this
+3. **LangGraph support** 
 4. **Observable metrics** - Built-in authorization tracking
 5. **Vector store agnostic** - Works with any retriever
 

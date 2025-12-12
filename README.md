@@ -1,8 +1,13 @@
-# SpiceDB RAG Authorization
+# LangChain-SpiceDB Integration
+
+> **📦 Package Name:** `langchain-spicedb`
+> **🌿 Branch:** This is the LangChain integration branch - see [`main` branch](https://github.com/sohanmaheshwar/spicedb-rag-authorization) for the original `spicedb-rag-auth` package.
 
 Authorization library for RAG (Retrieval-Augmented Generation) pipelines using SpiceDB. Designed for LangChain and LangGraph integrations with support for any vector store (Pinecone, FAISS, Weaviate, Chroma, etc.).
 
-**NOTE:** This is very much in alpha mode and is intended as a learning exercise rather than a production deployment. I've tested it against the `langchain_example.py` and also the SpiceDB - RAG example in the `authzed/workshops` [repo here](https://github.com/authzed/workshops/blob/main/secure-rag-pipelines/01-rag.ipynb)
+This package follows [LangChain's official integration guidelines](https://python.langchain.com/docs/contributing/) and provides standard LangChain components (BaseRetriever, BaseTool) plus additional middleware patterns.
+
+**NOTE:** This is in active development for LangChain integration submission. The original `spicedb-rag-auth` package remains available on the `main` branch.
 
 ## Features
 
@@ -35,17 +40,33 @@ Add an authorization node to a stateful LangGraph workflow to enforce permission
 
 ## Installation
 
-The project isn't on PyPi yet so you can pull from the GitHub repo directly like:
+### Install from GitHub (langchain branch)
 
 ```bash
-pip install "git+https://github.com/sohanmaheshwar/spicedb-rag-authorization.git#egg=langchain-spicedb[all]"
+# Install with all dependencies (recommended)
+pip install "git+https://github.com/sohanmaheshwar/spicedb-rag-authorization.git@langchain#egg=langchain-spicedb[all]"
+
+# Install with just LangChain support
+pip install "git+https://github.com/sohanmaheshwar/spicedb-rag-authorization.git@langchain#egg=langchain-spicedb[langchain]"
+
+# Install with just LangGraph support
+pip install "git+https://github.com/sohanmaheshwar/spicedb-rag-authorization.git@langchain#egg=langchain-spicedb[langgraph]"
 ```
 
-Alternatively, you can clone the repo locally and import it into your code like this:
+### Import Components
 
+```python
+from langchain_spicedb import (
+    SpiceDBRetriever,           # BaseRetriever wrapper
+    SpiceDBPermissionTool,      # BaseTool for agents
+    SpiceDBAuthFilter,          # Middleware pattern
+    create_auth_node,           # LangGraph node factory
+)
 ```
-import sys
-sys.path.append('/path_to/spicedb-rag-authorization')
+
+**Note:** Once published to PyPI, you'll be able to install with:
+```bash
+pip install langchain-spicedb
 ```
 
 ## Quick Start

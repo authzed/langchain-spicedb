@@ -123,25 +123,28 @@ class SpiceDBPermissionTool(BaseTool):
             use_tls: Whether to use TLS for SpiceDB connection
             **kwargs: Additional arguments passed to BaseTool
         """
-        super().__init__(**kwargs)
-        self.spicedb_endpoint = spicedb_endpoint
-        self.spicedb_token = spicedb_token
-        self.resource_type = resource_type
-        self.subject_type = subject_type
-        self.batch_size = batch_size
-        self.fail_open = fail_open
-        self.use_tls = use_tls
-
-        # Initialize authorizer
-        self._authorizer = SpiceDBAuthorizer(
+        # Pass all fields to parent __init__ for Pydantic v2 compatibility
+        super().__init__(
             spicedb_endpoint=spicedb_endpoint,
             spicedb_token=spicedb_token,
             resource_type=resource_type,
             subject_type=subject_type,
-            permission="view",  # Default, can be overridden per call
             batch_size=batch_size,
             fail_open=fail_open,
             use_tls=use_tls,
+            **kwargs
+        )
+
+        # Initialize authorizer after Pydantic validation
+        self._authorizer = SpiceDBAuthorizer(
+            spicedb_endpoint=self.spicedb_endpoint,
+            spicedb_token=self.spicedb_token,
+            resource_type=self.resource_type,
+            subject_type=self.subject_type,
+            permission="view",  # Default, can be overridden per call
+            batch_size=self.batch_size,
+            fail_open=self.fail_open,
+            use_tls=self.use_tls,
         )
 
     def _run(
@@ -263,24 +266,28 @@ class SpiceDBBulkPermissionTool(BaseTool):
         **kwargs: Any,
     ):
         """Initialize bulk permission check tool."""
-        super().__init__(**kwargs)
-        self.spicedb_endpoint = spicedb_endpoint
-        self.spicedb_token = spicedb_token
-        self.resource_type = resource_type
-        self.subject_type = subject_type
-        self.batch_size = batch_size
-        self.fail_open = fail_open
-        self.use_tls = use_tls
-
-        self._authorizer = SpiceDBAuthorizer(
+        # Pass all fields to parent __init__ for Pydantic v2 compatibility
+        super().__init__(
             spicedb_endpoint=spicedb_endpoint,
             spicedb_token=spicedb_token,
             resource_type=resource_type,
             subject_type=subject_type,
-            permission="view",
             batch_size=batch_size,
             fail_open=fail_open,
             use_tls=use_tls,
+            **kwargs
+        )
+
+        # Initialize authorizer after Pydantic validation
+        self._authorizer = SpiceDBAuthorizer(
+            spicedb_endpoint=self.spicedb_endpoint,
+            spicedb_token=self.spicedb_token,
+            resource_type=self.resource_type,
+            subject_type=self.subject_type,
+            permission="view",
+            batch_size=self.batch_size,
+            fail_open=self.fail_open,
+            use_tls=self.use_tls,
         )
 
     def _run(

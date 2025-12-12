@@ -112,21 +112,10 @@ class SpiceDBRetriever(BaseRetriever):
             use_tls: Whether to use TLS for SpiceDB connection
             **kwargs: Additional arguments passed to BaseRetriever
         """
-        super().__init__(**kwargs)
-        self.base_retriever = base_retriever
-        self.subject_id = subject_id
-        self.spicedb_endpoint = spicedb_endpoint
-        self.spicedb_token = spicedb_token
-        self.resource_type = resource_type
-        self.subject_type = subject_type
-        self.permission = permission
-        self.resource_id_key = resource_id_key
-        self.batch_size = batch_size
-        self.fail_open = fail_open
-        self.use_tls = use_tls
-
-        # Initialize authorizer
-        self._authorizer = SpiceDBAuthorizer(
+        # Pass all fields to parent __init__ for Pydantic v2 compatibility
+        super().__init__(
+            base_retriever=base_retriever,
+            subject_id=subject_id,
             spicedb_endpoint=spicedb_endpoint,
             spicedb_token=spicedb_token,
             resource_type=resource_type,
@@ -136,6 +125,20 @@ class SpiceDBRetriever(BaseRetriever):
             batch_size=batch_size,
             fail_open=fail_open,
             use_tls=use_tls,
+            **kwargs
+        )
+
+        # Initialize authorizer after Pydantic validation
+        self._authorizer = SpiceDBAuthorizer(
+            spicedb_endpoint=self.spicedb_endpoint,
+            spicedb_token=self.spicedb_token,
+            resource_type=self.resource_type,
+            subject_type=self.subject_type,
+            permission=self.permission,
+            resource_id_key=self.resource_id_key,
+            batch_size=self.batch_size,
+            fail_open=self.fail_open,
+            use_tls=self.use_tls,
         )
 
     def _get_relevant_documents(

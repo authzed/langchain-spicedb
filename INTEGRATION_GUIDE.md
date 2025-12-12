@@ -107,12 +107,15 @@ from langchain_core.runnables import RunnableParallel, RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 
 # Create the auth filter with subject_id
+# ALL parameters are required for SpiceDB to make access decisions
 auth = SpiceDBAuthFilter(
     spicedb_endpoint=SPICEDB_ENDPOINT,
     spicedb_token=SPICEDB_TOKEN,
+    subject_id="tim",
+    subject_type="user",
     resource_type="article",
     resource_id_key="article_id",
-    subject_id="tim",  # Pass user ID here
+    permission="view",
 )
 
 # Your chain with the new filter
@@ -320,20 +323,25 @@ To test authorization for different users, you have several options:
 from spicedb_rag_auth import SpiceDBAuthFilter
 
 # Create separate filters for each user
+# ALL parameters are required for SpiceDB to make access decisions
 alice_auth = SpiceDBAuthFilter(
     spicedb_endpoint=SPICEDB_ENDPOINT,
     spicedb_token=SPICEDB_TOKEN,
+    subject_id="alice",
+    subject_type="user",
     resource_type="article",
     resource_id_key="article_id",
-    subject_id="alice",
+    permission="view",
 )
 
 bob_auth = SpiceDBAuthFilter(
     spicedb_endpoint=SPICEDB_ENDPOINT,
     spicedb_token=SPICEDB_TOKEN,
+    subject_id="bob",
+    subject_type="user",
     resource_type="article",
     resource_id_key="article_id",
-    subject_id="bob",
+    permission="view",
 )
 
 # Use in chains
@@ -357,12 +365,15 @@ bob_chain = (
 ### Option 2: Pass subject_id at runtime
 
 ```python
-# Create one filter without subject_id
+# Create one filter without subject_id (will be passed at runtime)
+# ALL parameters except subject_id are required for SpiceDB to make access decisions
 auth = SpiceDBAuthFilter(
     spicedb_endpoint=SPICEDB_ENDPOINT,
     spicedb_token=SPICEDB_TOKEN,
+    subject_type="user",
     resource_type="article",
     resource_id_key="article_id",
+    permission="view",
 )
 
 chain = (

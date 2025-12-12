@@ -120,11 +120,14 @@ from langchain_core.runnables import RunnableParallel, RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 
 # Initialize auth filter (no subject_id yet)
+# ALL parameters are required for SpiceDB to make access decisions
 auth = SpiceDBAuthFilter(
     spicedb_endpoint="localhost:50051",
     spicedb_token="sometoken",
+    subject_type="user",
     resource_type="article",
     resource_id_key="article_id",
+    permission="view",
 )
 
 # Build your chain once
@@ -364,12 +367,29 @@ By default, `SpiceDBAuthFilter` returns only the authorized documents. To get me
 
 ```python
 # Without metrics (default)
-auth = SpiceDBAuthFilter(..., subject_id="alice")
+auth = SpiceDBAuthFilter(
+    spicedb_endpoint="localhost:50051",
+    spicedb_token="sometoken",
+    subject_id="alice",
+    subject_type="user",
+    resource_type="article",
+    resource_id_key="article_id",
+    permission="view",
+)
 chain = RunnableParallel({"context": retriever | auth, ...}) | prompt | llm
 result = await chain.ainvoke("question")  # Returns final answer
 
 # With metrics
-auth = SpiceDBAuthFilter(..., subject_id="alice", return_metrics=True)
+auth = SpiceDBAuthFilter(
+    spicedb_endpoint="localhost:50051",
+    spicedb_token="sometoken",
+    subject_id="alice",
+    subject_type="user",
+    resource_type="article",
+    resource_id_key="article_id",
+    permission="view",
+    return_metrics=True,
+)
 result = await auth.ainvoke(docs)  # Call auth directly
 
 print(result.authorized_documents)

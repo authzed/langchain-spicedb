@@ -63,7 +63,16 @@ agent = create_react_agent(llm, tools, prompt)
 from langchain_spicedb import SpiceDBAuthFilter
 
 # Composable middleware pattern
-auth = SpiceDBAuthFilter(...)
+# ALL parameters are required for SpiceDB to make access decisions
+auth = SpiceDBAuthFilter(
+    spicedb_endpoint="localhost:50051",
+    spicedb_token="sometoken",
+    subject_id="alice",
+    subject_type="user",
+    resource_type="article",
+    resource_id_key="article_id",
+    permission="view",
+)
 chain = retriever | auth | prompt | llm
 ```
 

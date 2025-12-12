@@ -19,16 +19,20 @@ class SpiceDBAuthFilter(Runnable):
     allowing it to be used in chains with the pipe operator (|).
 
     Example:
+        >>> # ALL parameters are required for SpiceDB to make access decisions
         >>> auth = SpiceDBAuthFilter(
         ...     spicedb_endpoint="localhost:50051",
         ...     spicedb_token="sometoken",
+        ...     subject_type="user",
         ...     resource_type="article",
+        ...     resource_id_key="article_id",
+        ...     permission="view",
         ... )
         >>>
         >>> # Use in a chain
         >>> chain = retriever | auth | prompt | llm
         >>>
-        >>> # Or with subject_id in config
+        >>> # Pass subject_id in config at runtime
         >>> result = await chain.ainvoke(
         ...     "What is SpiceDB?",
         ...     config={"configurable": {"subject_id": "alice"}}

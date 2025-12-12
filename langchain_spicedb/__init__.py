@@ -8,10 +8,14 @@ Designed for LangChain and LangGraph integrations with support for any vector st
 Example (LangChain):
     >>> from langchain_spicedb import SpiceDBAuthFilter
     >>>
+    >>> # ALL parameters are required for SpiceDB to make access decisions
     >>> auth = SpiceDBAuthFilter(
     ...     spicedb_endpoint="localhost:50051",
     ...     spicedb_token="sometoken",
+    ...     subject_type="user",
     ...     resource_type="article",
+    ...     resource_id_key="article_id",
+    ...     permission="view",
     ... )
     >>>
     >>> chain = retriever | auth.with_config(subject_id="alice") | prompt | llm
@@ -23,7 +27,10 @@ Example (LangGraph):
     >>> graph.add_node("authorize", create_auth_node(
     ...     spicedb_endpoint="localhost:50051",
     ...     spicedb_token="sometoken",
+    ...     subject_type="user",
     ...     resource_type="article",
+    ...     resource_id_key="article_id",
+    ...     permission="view",
     ... ))
 """
 

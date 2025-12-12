@@ -24,19 +24,23 @@ class SpiceDBRetriever(BaseRetriever):
     Example:
         >>> from langchain_community.vectorstores import FAISS
         >>> from langchain_openai import OpenAIEmbeddings
-        >>> from spicedb_rag_auth import SpiceDBRetriever
+        >>> from langchain_spicedb import SpiceDBRetriever
         >>>
         >>> # Create base retriever
         >>> vectorstore = FAISS.from_documents(docs, OpenAIEmbeddings())
         >>> base_retriever = vectorstore.as_retriever()
         >>>
         >>> # Wrap with SpiceDB authorization
+        >>> # ALL parameters are required for SpiceDB to make access decisions
         >>> auth_retriever = SpiceDBRetriever(
         ...     base_retriever=base_retriever,
         ...     spicedb_endpoint="localhost:50051",
         ...     spicedb_token="sometoken",
-        ...     resource_type="article",
         ...     subject_id="alice",
+        ...     subject_type="user",
+        ...     resource_type="article",
+        ...     resource_id_key="article_id",
+        ...     permission="view",
         ... )
         >>>
         >>> # Use in chain

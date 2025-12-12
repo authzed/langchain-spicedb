@@ -26,12 +26,16 @@ Your library now provides **three integration points**:
 from langchain_spicedb import SpiceDBRetriever
 
 # Wrap any retriever with authorization
+# ALL parameters are required for SpiceDB to make access decisions
 auth_retriever = SpiceDBRetriever(
     base_retriever=vectorstore.as_retriever(),
-    subject_id="alice",
-    spicedb_endpoint="localhost:50051",
-    spicedb_token="sometoken",
-    resource_type="article",
+    spicedb_endpoint="localhost:50051",        # SpiceDB server address
+    spicedb_token="sometoken",                 # Pre-shared key
+    subject_id="alice",                        # User making the request
+    subject_type="user",                       # Subject type in schema
+    resource_type="article",                   # Resource type in schema
+    resource_id_key="article_id",              # Metadata key for resource ID
+    permission="view",                         # Permission to check
 )
 
 # Use in chain
@@ -146,12 +150,16 @@ vectorstore = FAISS.from_documents(docs, OpenAIEmbeddings())
 base_retriever = vectorstore.as_retriever()
 
 # Wrap with authorization
+# ALL parameters are required for SpiceDB to make access decisions
 auth_retriever = SpiceDBRetriever(
     base_retriever=base_retriever,
-    subject_id="alice",
-    spicedb_endpoint="localhost:50051",
-    spicedb_token="sometoken",
-    resource_type="article",
+    spicedb_endpoint="localhost:50051",        # SpiceDB server address
+    spicedb_token="sometoken",                 # Pre-shared key
+    subject_id="alice",                        # User making the request
+    subject_type="user",                       # Subject type in schema
+    resource_type="article",                   # Resource type in schema
+    resource_id_key="article_id",              # Metadata key for resource ID
+    permission="view",                         # Permission to check
 )
 
 # Use in chain
@@ -296,13 +304,16 @@ vectorstore = FAISS.from_documents(documents, OpenAIEmbeddings())
 base_retriever = vectorstore.as_retriever()
 
 # Wrap with SpiceDB authorization
+# ALL parameters are required for SpiceDB to make access decisions
 retriever = SpiceDBRetriever(
     base_retriever=base_retriever,
-    subject_id="alice",  # User making the request
-    spicedb_endpoint="localhost:50051",
-    spicedb_token="sometoken",
-    resource_type="document",
-    resource_id_key="doc_id",  # Metadata key containing document ID
+    spicedb_endpoint="localhost:50051",        # SpiceDB server address
+    spicedb_token="sometoken",                 # Pre-shared key
+    subject_id="alice",                        # User making the request
+    subject_type="user",                       # Subject type in schema
+    resource_type="document",                  # Resource type in schema
+    resource_id_key="doc_id",                  # Metadata key for resource ID
+    permission="view",                         # Permission to check
 )
 ```
 

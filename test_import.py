@@ -3,14 +3,14 @@ Quick test to verify the package is correctly installed and importable.
 Run this to make sure everything works before integrating into your notebook.
 """
 
-print("Testing spicedb-rag-auth package...")
+print("Testing langchain-spicedb package...")
 print("=" * 80)
 print()
 
 # Test 1: Core module
 print("1. Testing core module import...")
 try:
-    from spicedb_rag_auth import SpiceDBAuthorizer, AuthorizationResult
+    from langchain_spicedb.core import SpiceDBAuthorizer, AuthorizationResult
     print("   ✅ SpiceDBAuthorizer imported successfully")
     print("   ✅ AuthorizationResult imported successfully")
 except ImportError as e:
@@ -21,7 +21,7 @@ except ImportError as e:
 print()
 print("2. Testing LangChain wrapper import...")
 try:
-    from spicedb_rag_auth import SpiceDBAuthFilter, SpiceDBAuthLambda
+    from langchain_spicedb import SpiceDBAuthFilter, SpiceDBAuthLambda
     print("   ✅ SpiceDBAuthFilter imported successfully")
     print("   ✅ SpiceDBAuthLambda imported successfully")
 except ImportError as e:
@@ -32,7 +32,7 @@ except ImportError as e:
 print()
 print("3. Testing LangGraph wrapper import...")
 try:
-    from spicedb_rag_auth import create_auth_node, AuthorizationNode
+    from langchain_spicedb import create_auth_node, AuthorizationNode
     print("   ✅ create_auth_node imported successfully")
     print("   ✅ AuthorizationNode imported successfully")
 except ImportError as e:
@@ -76,7 +76,7 @@ except Exception as e:
 print()
 print("5. Checking package version...")
 try:
-    from spicedb_rag_auth import __version__
+    from langchain_spicedb import __version__
     print(f"   ✅ Package version: {__version__}")
 except ImportError:
     print("   ⚠️  Version not found (not critical)")
@@ -88,9 +88,9 @@ print("✅ All tests passed! The package is ready to use.")
 print()
 print("Next steps:")
 print("1. Make sure SpiceDB is running on localhost:50051")
-print("2. Check out INTEGRATION_GUIDE.md for Jupyter notebook integration")
-print("3. Run examples/standalone_example.py to see it in action")
+print("2. Check out examples/langchain_example.py to see it in action")
+print("3. Run examples/langgraph_visualization_example.py for LangGraph")
 print()
-print("To test in your Jupyter notebook:")
-print("  from spicedb_rag_auth import SpiceDBAuthorizer")
+print("To use in your code:")
+print("  from langchain_spicedb import SpiceDBRetriever, SpiceDBPermissionTool")
 print()

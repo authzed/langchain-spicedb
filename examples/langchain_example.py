@@ -14,7 +14,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableParallel, RunnablePassthrough, RunnableLambda
 from langchain_openai import ChatOpenAI
 
-from spicedb_rag_auth import SpiceDBAuthLambda
+from langchain_spicedb import SpiceDBAuthLambda
 
 load_dotenv()
 

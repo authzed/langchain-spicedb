@@ -12,7 +12,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, END
 
-from spicedb_rag_auth import create_auth_node, RAGAuthState
+from langchain_spicedb import create_auth_node, RAGAuthState
 
 
 # Mock retriever for demonstration

@@ -14,7 +14,7 @@ The example creates a simple RAG pipeline with:
 
 1. **Python dependencies:**
    ```bash
-   pip install spicedb-rag-auth langchain langchain-openai python-dotenv
+   pip install langchain-spicedb langchain langchain-openai python-dotenv
    ```
 
 2. **OpenAI API Key:**

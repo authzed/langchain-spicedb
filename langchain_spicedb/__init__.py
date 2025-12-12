@@ -6,7 +6,7 @@ Designed for LangChain and LangGraph integrations with support for any vector st
 (Pinecone, FAISS, Weaviate, etc.).
 
 Example (LangChain):
-    >>> from spicedb_rag_auth import SpiceDBAuthFilter
+    >>> from langchain_spicedb import SpiceDBAuthFilter
     >>>
     >>> auth = SpiceDBAuthFilter(
     ...     spicedb_endpoint="localhost:50051",
@@ -17,7 +17,7 @@ Example (LangChain):
     >>> chain = retriever | auth.with_config(subject_id="alice") | prompt | llm
 
 Example (LangGraph):
-    >>> from spicedb_rag_auth import create_auth_node
+    >>> from langchain_spicedb import create_auth_node
     >>>
     >>> graph = StateGraph(MyState)
     >>> graph.add_node("authorize", create_auth_node(

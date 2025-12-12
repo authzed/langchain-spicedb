@@ -3,16 +3,16 @@ requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "spicedb-rag-auth"
+name = "langchain-spicedb"
 version = "0.1.0"
-description = "Universal SpiceDB authorization for RAG pipelines - works with any framework and vector store"
+description = "SpiceDB authorization for LangChain RAG pipelines and agents - fine-grained access control for AI applications"
 readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "MIT"}
 authors = [
     {name = "Your Name", email = "your.email@example.com"}
 ]
-keywords = ["spicedb", "authorization", "rag", "langchain", "langgraph", "pinecone", "faiss"]
+keywords = ["langchain", "spicedb", "authorization", "rag", "ai", "llm", "permissions", "langgraph"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",

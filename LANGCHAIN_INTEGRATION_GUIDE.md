@@ -19,11 +19,11 @@ This guide explains how to publish SpiceDB RAG Authorization as an official Lang
 
 ## Integration Structure
 
-Your library now provides **three integration points**, matching Permit.io's pattern:
+Your library now provides **three integration points**:
 
 ### 1. Retrievers (for RAG Pipelines)
 ```python
-from spicedb_rag_auth import SpiceDBRetriever
+from langchain_spicedb import SpiceDBRetriever
 
 # Wrap any retriever with authorization
 auth_retriever = SpiceDBRetriever(
@@ -40,7 +40,7 @@ chain = auth_retriever | prompt | llm
 
 ### 2. Tools (for Agents)
 ```python
-from spicedb_rag_auth import SpiceDBPermissionTool
+from langchain_spicedb import SpiceDBPermissionTool
 
 # Create tool for agents
 permission_tool = SpiceDBPermissionTool(
@@ -54,9 +54,9 @@ tools = [permission_tool, ...]
 agent = create_react_agent(llm, tools, prompt)
 ```
 
-### 3. Middleware (Your Innovation)
+### 3. Middleware
 ```python
-from spicedb_rag_auth import SpiceDBAuthFilter
+from langchain_spicedb import SpiceDBAuthFilter
 
 # Composable middleware pattern
 auth = SpiceDBAuthFilter(...)
@@ -73,11 +73,11 @@ langchain-spicedb
 ```
 
 You'll need to:
-1. Rename package directory: `spicedb_rag_auth/` → `langchain_spicedb/`
+1. Rename package directory: `langchain_spicedb/` → `langchain_spicedb/`
 2. Update imports throughout codebase
 3. Update `pyproject.toml` with new name
 
-**Or** keep current name (`spicedb-rag-auth`) as it already follows the pattern and is more descriptive.
+**Or** keep current name (`langchain-spicedb`) as it already follows the pattern and is more descriptive.
 
 ### Step 2: Update pyproject.toml
 
@@ -85,7 +85,7 @@ Ensure your `pyproject.toml` includes:
 
 ```toml
 [project]
-name = "spicedb-rag-auth"  # or "langchain-spicedb"
+name = "langchain-spicedb"  # or "langchain-spicedb"
 version = "0.1.0"
 description = "Fine-grained authorization for RAG pipelines using SpiceDB"
 readme = "README.md"
@@ -125,9 +125,9 @@ all = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/sohanmaheshwar/spicedb-rag-authorization"
-Documentation = "https://github.com/sohanmaheshwar/spicedb-rag-authorization#readme"
-Repository = "https://github.com/sohanmaheshwar/spicedb-rag-authorization"
+Homepage = "https://github.com/sohanmaheshwar/langchain-spicedborization"
+Documentation = "https://github.com/sohanmaheshwar/langchain-spicedborization#readme"
+Repository = "https://github.com/sohanmaheshwar/langchain-spicedborization"
 ```
 
 ### Step 3: Create Example Scripts
@@ -139,7 +139,7 @@ Create examples for the new components:
 """Example: Using SpiceDBRetriever with LangChain"""
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
-from spicedb_rag_auth import SpiceDBRetriever
+from langchain_spicedb import SpiceDBRetriever
 
 # Create base retriever
 vectorstore = FAISS.from_documents(docs, OpenAIEmbeddings())
@@ -163,7 +163,7 @@ result = chain.invoke("What is SpiceDB?")
 ```python
 """Example: Using SpiceDB permission tools with agents"""
 from langchain.agents import create_react_agent
-from spicedb_rag_auth import SpiceDBPermissionTool
+from langchain_spicedb import SpiceDBPermissionTool
 
 # Create tools
 permission_tool = SpiceDBPermissionTool(
@@ -202,11 +202,11 @@ RAG pipelines and AI agents.
 
 <CodeGroup>
   ```bash pip theme={null}
-  pip install spicedb-rag-auth
+  pip install langchain-spicedb
   ```
 
   ```bash uv theme={null}
-  uv add spicedb-rag-auth
+  uv add langchain-spicedb
   ```
 </CodeGroup>
 
@@ -262,7 +262,7 @@ is authorized to access.
 Install the package:
 
 ```bash theme={null}
-pip install spicedb-rag-auth
+pip install langchain-spicedb
 ```
 
 Set up SpiceDB and define your schema:
@@ -289,7 +289,7 @@ EOF
 ```python theme={null}
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
-from spicedb_rag_auth import SpiceDBRetriever
+from langchain_spicedb import SpiceDBRetriever
 
 # Create your base retriever
 vectorstore = FAISS.from_documents(documents, OpenAIEmbeddings())
@@ -386,7 +386,7 @@ zed relationship create document:article-123 viewer user:alice --insecure
 
 ## API reference
 
-For detailed documentation, see the [GitHub repository](https://github.com/sohanmaheshwar/spicedb-rag-authorization).
+For detailed documentation, see the [GitHub repository](https://github.com/sohanmaheshwar/langchain-spicedborization).
 
 ***
 
@@ -419,7 +419,7 @@ reasoning process. This is useful for:
 Install the package:
 
 ```bash theme={null}
-pip install spicedb-rag-auth
+pip install langchain-spicedb
 ```
 
 ## Available Tools
@@ -429,7 +429,7 @@ pip install spicedb-rag-auth
 Checks if a user has permission for a single resource.
 
 ```python theme={null}
-from spicedb_rag_auth import SpiceDBPermissionTool
+from langchain_spicedb import SpiceDBPermissionTool
 
 tool = SpiceDBPermissionTool(
     spicedb_endpoint="localhost:50051",
@@ -443,7 +443,7 @@ tool = SpiceDBPermissionTool(
 Checks permissions for multiple resources at once.
 
 ```python theme={null}
-from spicedb_rag_auth import SpiceDBBulkPermissionTool
+from langchain_spicedb import SpiceDBBulkPermissionTool
 
 bulk_tool = SpiceDBBulkPermissionTool(
     spicedb_endpoint="localhost:50051",
@@ -515,7 +515,7 @@ Final Answer: Yes, alice can view doc-123
 
 ## API reference
 
-For detailed documentation, see the [GitHub repository](https://github.com/sohanmaheshwar/spicedb-rag-authorization).
+For detailed documentation, see the [GitHub repository](https://github.com/sohanmaheshwar/langchain-spicedborization).
 
 ***
 
@@ -531,7 +531,7 @@ Create tests following LangChain's standard test suite:
 ```python
 # tests/test_retrievers.py
 import pytest
-from spicedb_rag_auth import SpiceDBRetriever
+from langchain_spicedb import SpiceDBRetriever
 from langchain_core.documents import Document
 
 @pytest.mark.asyncio

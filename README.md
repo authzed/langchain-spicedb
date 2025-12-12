@@ -38,7 +38,7 @@ Add an authorization node to a stateful LangGraph workflow to enforce permission
 The project isn't on PyPi yet so you can pull from the GitHub repo directly like:
 
 ```bash
-pip install "git+https://github.com/sohanmaheshwar/spicedb-rag-authorization.git#egg=spicedb-rag-auth[all]"
+pip install "git+https://github.com/sohanmaheshwar/spicedb-rag-authorization.git#egg=langchain-spicedb[all]"
 ```
 
 Alternatively, you can clone the repo locally and import it into your code like this:
@@ -94,7 +94,7 @@ from authzed.api.v1 import WriteRelationshipsRequest, RelationshipUpdate, Relati
 Use as a Runnable in LangChain chains.
 
 ```python
-from spicedb_rag_auth import SpiceDBAuthFilter
+from langchain_spicedb import SpiceDBAuthFilter
 from langchain_core.runnables import RunnableParallel, RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 
@@ -136,7 +136,7 @@ Add as a node in your LangGraph state machine:
 
 ```python
 from langgraph.graph import StateGraph, END
-from spicedb_rag_auth import create_auth_node, RAGAuthState
+from langchain_spicedb import create_auth_node, RAGAuthState
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 
@@ -202,7 +202,7 @@ graph = StateGraph(MyCustomState)
 # ... add nodes and edges
 
 # Option 3: Or use class-based node for more control
-from spicedb_rag_auth import AuthorizationNode
+from langchain_spicedb import AuthorizationNode
 
 auth_node = AuthorizationNode(
     spicedb_endpoint="localhost:50051",
@@ -381,7 +381,7 @@ When teaching or debugging, you can prove the authorization node exists in the g
 
 ```python
 from langgraph.graph import StateGraph, END
-from spicedb_rag_auth import create_auth_node, RAGAuthState
+from langchain_spicedb import create_auth_node, RAGAuthState
 
 graph = StateGraph(RAGAuthState)
 
@@ -478,7 +478,7 @@ authorizer = SpiceDBAuthorizer(..., fail_open=True)
 pytest tests/
 
 # With coverage
-pytest tests/ --cov=spicedb_rag_auth
+pytest tests/ --cov=langchain_spicedb
 ```
 
 ## Use Cases

@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "WebFetch(domain:docs.langchain.com)"
+      "WebFetch(domain:docs.langchain.com)",
+      "Bash(python3 -m pytest:*)",
+      "Bash(pip3 show:*)"
     ],
     "deny": [],
     "ask": []

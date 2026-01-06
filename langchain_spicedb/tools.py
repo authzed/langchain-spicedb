@@ -18,7 +18,7 @@ class SpiceDBPermissionInput(BaseModel):
         description="The user ID to check permissions for (e.g., 'alice', 'user-123')"
     )
     resource_id: str = Field(
-        description="The resource ID to check access to (e.g., 'doc1', 'article-456')"
+        description="ONLY the ID portion of the resource, without the type prefix. Examples: '123', 'doc1', 'article-456'. Do NOT include the resource type (e.g., use '123' not 'article 123' or 'article-123')."
     )
     permission: str = Field(
         default="view",
@@ -61,9 +61,12 @@ class SpiceDBPermissionTool(BaseTool):
     that require authorization. Returns 'true' if permission is granted,
     'false' if denied.
 
+    IMPORTANT: resource_id should be ONLY the ID portion, not including the resource type.
+    For example, if checking "article 123", use resource_id='123' (not 'article 123').
+
     Input should be:
     - subject_id: User ID (e.g., 'alice', 'user-123')
-    - resource_id: Resource ID (e.g., 'doc1', 'article-456')
+    - resource_id: ONLY the ID portion (e.g., '123', 'doc1', 'article-456')
     - permission: Permission to check (e.g., 'view', 'edit')
     """
     args_schema: Type[BaseModel] = SpiceDBPermissionInput
@@ -201,7 +204,7 @@ class SpiceDBBulkPermissionInput(BaseModel):
         description="The user ID to check permissions for"
     )
     resource_ids: str = Field(
-        description="Comma-separated list of resource IDs to check (e.g., 'doc1,doc2,doc3')"
+        description="Comma-separated list of resource IDs (ONLY the ID portions, no type prefix). Examples: '123,456,789' or 'doc1,doc2,doc3'. Do NOT include resource type."
     )
     permission: str = Field(
         default="view",
@@ -237,9 +240,12 @@ class SpiceDBBulkPermissionTool(BaseTool):
     Check if a user has permission to access multiple resources in SpiceDB.
     Returns a comma-separated list of resource IDs the user can access.
 
+    IMPORTANT: resource_ids should be ONLY the ID portions, not including resource type.
+    For example, for "articles 123, 456, 789", use resource_ids='123,456,789'.
+
     Input should be:
     - subject_id: User ID
-    - resource_ids: Comma-separated resource IDs (e.g., 'doc1,doc2,doc3')
+    - resource_ids: Comma-separated IDs (ONLY ID portions, e.g., '123,456,789')
     - permission: Permission to check (default: 'view')
     """
     args_schema: Type[BaseModel] = SpiceDBBulkPermissionInput

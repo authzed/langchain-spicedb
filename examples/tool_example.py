@@ -69,9 +69,13 @@ async def main():
 You have access to tools that check permissions in our authorization system (SpiceDB).
 
 When a user asks about accessing resources:
-1. Use the permission tools to check their access
-2. Provide clear, helpful responses about what they can and cannot do
-3. If they don't have access, politely explain they lack the required permission
+1. Extract ONLY the numeric or alphanumeric ID from the resource reference
+   - Example: "article 123" -> use resource_id='123'
+   - Example: "articles 123, 456, 789" -> use resource_ids='123,456,789'
+   - DO NOT include the resource type in the ID (no 'article-123' or 'article 123')
+2. Use the permission tools to check their access
+3. Provide clear, helpful responses about what they can and cannot do
+4. If they don't have access, politely explain they lack the required permission
 
 Available resource types: article
 Available permissions: view, edit, delete
@@ -161,9 +165,9 @@ async def direct_tool_usage():
     print("Checking permissions directly (no LLM needed):")
     print()
 
-    # Direct synchronous check
-    print("1. Synchronous check - Can tim view article 123?")
-    result = permission_tool.invoke({
+    # Direct async check 1
+    print("1. Async check - Can tim view article 123?")
+    result = await permission_tool.ainvoke({
         "subject_id": "tim",
         "resource_id": "123",
         "permission": "view"
@@ -171,7 +175,7 @@ async def direct_tool_usage():
     print(f"   Result: {result}")
     print()
 
-    # Direct async check
+    # Direct async check 2
     print("2. Async check - Can alice view article 456?")
     result = await permission_tool.ainvoke({
         "subject_id": "alice",
@@ -202,7 +206,7 @@ async def direct_tool_usage():
     print("4. Using permission check in application logic:")
     user = "tim"
     article = "123"
-    can_view = permission_tool.invoke({
+    can_view = await permission_tool.ainvoke({
         "subject_id": user,
         "resource_id": article,
         "permission": "view"

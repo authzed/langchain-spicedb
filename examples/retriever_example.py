@@ -63,7 +63,7 @@ async def main():
     # Configuration
     spicedb_endpoint = os.getenv("SPICEDB_ENDPOINT", "localhost:50051")
     spicedb_token = os.getenv("SPICEDB_TOKEN", "somerandomkeyhere")
-    subject_id = os.getenv("SUBJECT_ID", "tim")  # Change to test different users
+    subject_id = os.getenv("SUBJECT_ID", "alice")  # Change to test different users
 
     print(f"Configuration:")
     print(f"  SpiceDB Endpoint: {spicedb_endpoint}")
@@ -185,7 +185,7 @@ async def demo_without_openai():
 
     spicedb_endpoint = os.getenv("SPICEDB_ENDPOINT", "localhost:50051")
     spicedb_token = os.getenv("SPICEDB_TOKEN", "somerandomkeyhere")
-    subject_id = os.getenv("SUBJECT_ID", "tim")
+    subject_id = os.getenv("SUBJECT_ID", "alice")
 
     print(f"Testing document filtering for user: {subject_id}")
     print()

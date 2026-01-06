@@ -61,12 +61,12 @@ async def main():
     # Note: We're using SpiceDBAuthLambda for use with RunnableLambda
     auth_filter = SpiceDBAuthLambda(
         spicedb_endpoint="localhost:50051",
-        spicedb_token="sometoken",
+        spicedb_token="somerandomkeyhere",
         resource_type="article",
         subject_type="user",
         permission="view",
         resource_id_key="article_id",
-        subject_id="alice",  # Change this to test different users
+        subject_id="tim",  # Change this to test different users
     )
 
     # Create prompt

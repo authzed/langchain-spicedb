@@ -1,132 +1,27 @@
 # langchain-spicedb Examples
 
-This directory contains example scripts demonstrating how to use langchain-spicedb to add fine-grained authorization to your LangChain applications.
+Complete guide to using langchain-spicedb for adding fine-grained authorization to your LangChain applications.
 
-## Overview
+## Table of Contents
 
-langchain-spicedb provides three main integration patterns:
+- [Quick Start](#quick-start) - Get running in 5 minutes
+- [What is langchain-spicedb?](#what-is-langchain-spicedb)
+- [Installation](#installation)
+- [Environment Configuration](#environment-configuration) - Using .env file (recommended)
+- [SpiceDB Setup](#spicedb-setup)
+- [Examples Overview](#examples-overview)
+- [Running Examples](#running-examples)
+- [Use Cases](#use-cases)
+- [Troubleshooting](#troubleshooting)
+- [Advanced Configuration](#advanced-configuration)
 
-1. **SpiceDBRetriever** - Authorization-aware document retrieval for RAG pipelines
-2. **SpiceDBPermissionTool** - Permission checking tools for agentic workflows
-3. **SpiceDBAuthLambda** - Low-level authorization filter for custom chains
+---
 
-## Examples
+## Quick Start
 
-### 1. SpiceDBRetriever Example (`retriever_example.py`)
+Get up and running in 5 minutes:
 
-**Use Case**: Automatically filter retrieved documents based on user permissions in RAG applications.
-
-```bash
-python examples/retriever_example.py
-```
-
-**What it demonstrates:**
-- Wrapping any LangChain retriever with authorization
-- Automatic document filtering before LLM processing
-- Synchronous and asynchronous retrieval
-- Batch retrieval with authorization
-- RAG chain with permission-filtered context
-
-**Key Features:**
-- Works with any vector store (Pinecone, Chroma, FAISS, etc.)
-- Zero changes to existing retriever code
-- Transparent authorization filtering
-- Works without OpenAI API key (basic demo mode)
-
-**Example Output:**
-```
-Documents from base retriever (before authorization):
-  - Python Basics (ID: 123)
-  - JavaScript Guide (ID: 456)
-  - ML Introduction (ID: 789)
-  - SpiceDB Overview (ID: 101)
-
-Documents after SpiceDB authorization filter (user: tim):
-  ✓ Python Basics (ID: 123)
-  ✓ JavaScript Guide (ID: 456)
-
-SpiceDB filtered out 2 unauthorized document(s)
-```
-
-### 2. SpiceDBPermissionTool Example (`tool_example.py`)
-
-**Use Case**: Give LangChain agents the ability to check permissions before taking actions.
-
-```bash
-python examples/tool_example.py
-```
-
-**What it demonstrates:**
-- Single permission checks with `SpiceDBPermissionTool`
-- Bulk permission checks with `SpiceDBBulkPermissionTool`
-- Using tools with LangChain agents
-- Direct tool usage without agents
-- Multi-permission workflow patterns
-
-**Key Features:**
-- Tool-use compatible (works with function calling models)
-- Both single and bulk permission checking
-- Synchronous and asynchronous support
-- Works standalone or with agents
-- Can run without OpenAI API key (direct usage mode)
-
-**Example Output:**
-```
-Agent Response:
-Based on the permission check, user tim CAN view article 123. They have the
-necessary 'view' permission for this resource.
-
-Bulk Check Result:
-User tim can access: 123, 456
-User tim cannot access: 789
-```
-
-### 3. LangChain Chain Example (`langchain_example.py`)
-
-**Use Case**: Custom authorization filtering using `SpiceDBAuthLambda` in chains.
-
-```bash
-python examples/langchain_example.py
-```
-
-**What it demonstrates:**
-- Low-level authorization filtering with `RunnableLambda`
-- Custom chain composition with authorization
-- Integration with LangChain LCEL (LangChain Expression Language)
-
-**Note**: For most use cases, prefer `SpiceDBRetriever` over `SpiceDBAuthLambda` as it provides the same functionality with better ergonomics.
-
-### 4. LangGraph Visualization Example (`langgraph_visualization_example.py`)
-
-**Use Case**: Authorization in LangGraph stateful workflows.
-
-```bash
-python examples/langgraph_visualization_example.py
-```
-
-**What it demonstrates:**
-- SpiceDB authorization in LangGraph nodes
-- Stateful workflows with authorization
-- Graph visualization with authorization steps
-
-## Setup
-
-### 1. Install Dependencies
-
-```bash
-# Install the package with all dependencies
-pip install -e ".[all]"
-
-# Or install specific dependencies
-pip install -e ".[examples]"  # Just example dependencies
-pip install langchain-openai  # For LLM examples
-```
-
-### 2. Set Up SpiceDB
-
-You need a running SpiceDB instance. Choose one option:
-
-#### Option A: Local SpiceDB with Docker
+### 1. Start SpiceDB (1 minute)
 
 ```bash
 docker run --rm -p 50051:50051 \
@@ -135,15 +30,29 @@ docker run --rm -p 50051:50051 \
   --grpc-no-tls
 ```
 
-#### Option B: SpiceDB Cloud
+Keep this running in a terminal window.
 
-1. Sign up at https://app.authzed.com
-2. Create a permission system
-3. Get your endpoint and token
+### 2. Install zed CLI (Optional but recommended)
 
-### 3. Configure SpiceDB Schema
+```bash
+# macOS
+brew install authzed/tap/zed
 
-Create a schema file `schema.zed`:
+# Linux
+curl -L https://github.com/authzed/zed/releases/latest/download/zed-linux-amd64 -o zed
+chmod +x zed
+sudo mv zed /usr/local/bin/
+```
+
+Configure zed:
+
+```bash
+zed context set local localhost:50051 somerandomkeyhere --insecure
+```
+
+### 3. Create Schema (1 minute)
+
+Create a file `schema.zed`:
 
 ```zed
 definition user {}
@@ -151,132 +60,408 @@ definition user {}
 definition article {
     relation viewer: user
     relation editor: user
-
     permission view = viewer + editor
     permission edit = editor
 }
 ```
 
-Apply the schema:
+Apply it:
 
 ```bash
-# Using zed CLI
 zed schema write schema.zed
-
-# Or via API
-curl -X POST http://localhost:50051/v1/schema/write \
-  -H "Authorization: Bearer somerandomkeyhere" \
-  -d @schema.zed
 ```
 
-### 4. Create Test Relationships
+### 4. Create Test Relationships (1 minute)
 
 ```bash
-# Using zed CLI
+# Tim can view articles 123 and 456
 zed relationship create article:123 viewer user:tim
 zed relationship create article:456 viewer user:tim
-zed relationship create article:789 viewer user:alice
 
-# Or via API
-curl -X POST http://localhost:50051/v1/relationships/write \
-  -H "Authorization: Bearer somerandomkeyhere" \
-  -d '{
-    "updates": [
-      {
-        "operation": "CREATE",
-        "relationship": {
-          "resource": {"objectType": "article", "objectId": "123"},
-          "relation": "viewer",
-          "subject": {"object": {"objectType": "user", "objectId": "tim"}}
-        }
-      }
-    ]
-  }'
+# Alice can view article 789 and edit article 123
+zed relationship create article:789 viewer user:alice
+zed relationship create article:123 editor user:alice
 ```
 
-### 5. Configure Environment Variables
+### 5. Set Environment Variables (30 seconds)
 
-Create a `.env` file in the examples directory:
+Create a `.env` file in the examples directory (copy from .env.example):
 
 ```bash
-# SpiceDB Configuration (required)
+cp .env.example .env
+```
+
+Then edit `.env` with your values:
+
+```bash
+# SpiceDB Configuration
 SPICEDB_ENDPOINT=localhost:50051
 SPICEDB_TOKEN=somerandomkeyhere
 
-# For LLM examples (optional)
-OPENAI_API_KEY=sk-...
-
-# Test different users (optional)
+# User to test as
 SUBJECT_ID=tim
+
+# OpenAI API Key (optional, for full RAG demos)
+OPENAI_API_KEY=sk-your-key-here
 ```
 
-## Running Examples
-
-### Quick Start (No OpenAI API Key Required)
+### 6. Install Package (1 minute)
 
 ```bash
-# Basic retriever demo
+pip install -e ".[all]"
+```
+
+### 7. Run Examples (1 minute)
+
+```bash
+# No OpenAI API key needed for basic demos
 python examples/retriever_example.py
-
-# Basic tool demo
 python examples/tool_example.py
-```
 
-These examples will run in demo mode, showing authorization filtering without requiring an OpenAI API key.
-
-### Full Examples (With OpenAI)
-
-```bash
-# Set your OpenAI API key
+# With OpenAI for full RAG demo (optional)
 export OPENAI_API_KEY=sk-...
-
-# Run retriever example with RAG
-python examples/retriever_example.py
-
-# Run agent example with permission tools
-python examples/tool_example.py
-
-# Run custom chain example
-python examples/langchain_example.py
-```
-
-### Testing Different Users
-
-```bash
-# Test as user 'alice'
-export SUBJECT_ID=alice
-python examples/retriever_example.py
-
-# Test as user 'bob' (likely no permissions)
-export SUBJECT_ID=bob
 python examples/retriever_example.py
 ```
 
-## Example Use Cases
+---
 
-### E-Commerce Platform
+## What is langchain-spicedb?
 
-**Scenario**: Different customer tiers (free, premium, enterprise) have access to different product documentation.
+langchain-spicedb integrates [SpiceDB](https://authzed.com) authorization into [LangChain](https://python.langchain.com/), enabling you to build RAG applications and AI agents that respect fine-grained permissions.
+
+**Key Features:**
+- ✓ Authorization-aware document retrieval for RAG
+- ✓ Permission checking tools for AI agents
+- ✓ Works with any vector store (Pinecone, Chroma, FAISS, etc.)
+- ✓ Batch permission checks for efficiency
+- ✓ Async/sync support
+- ✓ Production-ready with TLS and fail-open modes
+
+**Why use it?**
+
+In multi-tenant applications, healthcare systems, or any environment with sensitive data, you need to ensure users only access documents they're authorized to see. langchain-spicedb makes this transparent:
 
 ```python
-# Premium customers can access all docs
+# Without authorization - everyone sees everything
+retriever = vector_store.as_retriever()
+docs = retriever.invoke("query")  # Returns all matches
+
+# With authorization - automatic filtering
 retriever = SpiceDBRetriever(
-    base_retriever=pinecone_retriever,
+    base_retriever=vector_store.as_retriever(),
     subject_id=user_id,
-    subject_type="user",
-    resource_type="documentation",
-    resource_id_key="doc_id",
+    resource_type="article",
     permission="view",
     ...
 )
+docs = retriever.invoke("query")  # Returns only authorized documents
+```
 
-docs = retriever.invoke("How do I use the API?")
-# Only returns docs the user has permission to see
+---
+
+## Installation
+
+### Install langchain-spicedb
+
+```bash
+# From PyPI (when published)
+pip install langchain-spicedb
+
+# Or from source
+git clone https://github.com/sohanmaheshwar/spicedb-rag-authorization/tree/langchain
+cd langchain-spicedb
+pip install -e ".[all]"
+```
+
+### Install Example Dependencies
+
+```bash
+# For basic examples (no LLM)
+pip install -e ".[dev]"
+
+# For full RAG examples with OpenAI
+pip install langchain-openai python-dotenv
+```
+
+---
+
+### Configure Schema
+
+Create `schema.zed`:
+
+```zed
+definition user {}
+
+definition article {
+    relation viewer: user
+    relation editor: user
+    permission view = viewer + editor
+    permission edit = editor
+}
+```
+
+This schema defines:
+- **user**: Represents people in your system
+- **article**: Represents documents/content
+- **viewer relation**: User can see the article
+- **editor relation**: User can modify the article
+- **view permission**: Granted to viewers and editors
+- **edit permission**: Granted to editors only
+
+**Apply the schema:**
+
+```bash
+# With zed CLI
+zed schema write schema.zed
+
+# Or with curl
+curl -X POST http://localhost:50051/v1/schema/write \
+  -H "Authorization: Bearer somerandomkeyhere" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "schema": "definition user {}\n\ndefinition article {\n    relation viewer: user\n    relation editor: user\n    permission view = viewer + editor\n    permission edit = editor\n}"
+  }'
+```
+
+### Create Test Relationships
+
+These relationships define who can access what:
+
+```bash
+# Tim can view articles 123 and 456
+zed relationship create article:123 viewer user:tim
+zed relationship create article:456 viewer user:tim
+
+# Alice can view article 789 and edit article 123
+zed relationship create article:789 viewer user:alice
+zed relationship create article:123 editor user:alice
+```
+
+**What this means:**
+- Tim has **view** permission on articles 123 and 456
+- Alice has **view** permission on article 789
+- Alice has **edit** permission on article 123 (which also grants view)
+
+**Verify permissions:**
+
+```bash
+# Should return true
+zed permission check article:123 view user:tim
+zed permission check article:456 view user:tim
+zed permission check article:789 view user:alice
+zed permission check article:123 edit user:alice
+
+# Should return false
+zed permission check article:789 view user:tim
+zed permission check article:456 edit user:alice
+```
+
+---
+
+## Examples Overview
+
+### Example Files
+
+```
+examples/
+├── README.md                          # This file
+├── retriever_example.py               # SpiceDBRetriever demo
+├── tool_example.py                    # SpiceDBPermissionTool demo
+├── langchain_example.py               # Custom chains with SpiceDBAuthLambda
+└── langgraph_visualization_example.py # LangGraph integration
+```
+
+### 1. SpiceDBRetriever Example (`retriever_example.py`)
+
+**What it does:** Automatically filters retrieved documents based on user permissions before passing them to an LLM.
+
+**Use cases:**
+- Multi-tenant SaaS (users only see their organization's data)
+- Healthcare (doctors only access assigned patient records)
+- E-commerce (different docs for free/premium customers)
+
+**Key features:**
+- Wraps any LangChain retriever
+- Transparent authorization filtering
+- Works with vector stores (Pinecone, Chroma, FAISS)
+- Batch operations
+- Runs without OpenAI for demos
+
+**Run it:**
+
+```bash
+# Basic demo (no API key needed)
+python examples/retriever_example.py
+
+# Full RAG demo
+export OPENAI_API_KEY=sk-...
+python examples/retriever_example.py
+
+# Test different users
+export SUBJECT_ID=alice
+python examples/retriever_example.py
+```
+
+**Expected output:**
+
+```
+Documents from base retriever (before authorization): 4
+  - Python Basics (ID: 123)
+  - JavaScript Guide (ID: 456)
+  - ML Introduction (ID: 789)
+  - SpiceDB Overview (ID: 101)
+
+Documents after SpiceDB authorization filter (user: tim): 2
+  ✓ Python Basics (ID: 123)
+  ✓ JavaScript Guide (ID: 456)
+
+SpiceDB filtered out 2 unauthorized documents
+```
+
+### 2. SpiceDBPermissionTool Example (`tool_example.py`)
+
+**What it does:** Gives AI agents the ability to check permissions before taking actions.
+
+**Use cases:**
+- Content management (agent checks edit permissions)
+- Admin panels (agent verifies admin rights)
+- Document workflows (agent checks approval permissions)
+
+**Key features:**
+- Single permission checks
+- Bulk permission checks (multiple resources at once)
+- Works with LangChain agents
+- Direct usage without agents
+- Runs without OpenAI for basic demos
+
+**Run it:**
+
+```bash
+# Basic demo (no API key needed)
+python examples/tool_example.py
+
+# With agent (requires OpenAI)
+export OPENAI_API_KEY=sk-...
+python examples/tool_example.py
+```
+
+**Expected output:**
+
+```
+Agent Response:
+User tim CAN view article 123. They have the necessary 'view' permission.
+
+Bulk check result:
+User tim can access: 123, 456
+User tim cannot access: 789
+```
+
+### 3. Custom Chain Example (`langchain_example.py`)
+
+Low-level authorization filtering using `SpiceDBAuthLambda` with LangChain Expression Language (LCEL).
+
+**Note:** For most use cases, prefer `SpiceDBRetriever` which provides the same functionality with better ergonomics.
+
+---
+
+## Running Examples
+
+### Without OpenAI API Key
+
+The examples include demo modes that work without an API key:
+
+```bash
+python examples/retriever_example.py
+python examples/tool_example.py
+```
+
+These will:
+- Show document filtering in action
+- Demonstrate permission checks
+- Display before/after authorization results
+- Skip LLM-based Q&A
+
+### With OpenAI API Key
+
+For full RAG demonstrations:
+
+```bash
+export OPENAI_API_KEY=sk-...
+python examples/retriever_example.py
+python examples/tool_example.py
+```
+
+These will:
+- Include LLM-based question answering
+- Show agent reasoning
+- Demonstrate permission-aware responses
+
+### Testing Different Users
+
+To test different users, edit the `SUBJECT_ID` in your `.env` file:
+
+```bash
+# Edit .env file
+SUBJECT_ID=alice  # Change from 'tim' to 'alice'
+```
+
+Then run the examples:
+
+```bash
+# Test as Alice (can view 789, edit 123)
+python examples/retriever_example.py
+
+# Test as Bob (no permissions)
+# Edit .env: SUBJECT_ID=bob
+python examples/retriever_example.py
+```
+
+**Alternative:** You can also override temporarily via terminal export (less secure):
+
+```bash
+SUBJECT_ID=alice python examples/retriever_example.py
+```
+
+### Expected Results by User
+
+**User: tim**
+- ✓ Can view articles 123, 456
+- ✗ Cannot view article 789
+- ✗ Cannot edit any articles
+
+**User: alice**
+- ✓ Can view articles 123, 789
+- ✓ Can edit article 123
+- ✗ Cannot view article 456
+
+---
+
+## Use Cases
+
+### Multi-Tenant SaaS
+
+**Scenario:** Different customer organizations should only access their own data.
+
+```python
+retriever = SpiceDBRetriever(
+    base_retriever=vector_store.as_retriever(),
+    subject_id=user_id,
+    subject_type="user",
+    resource_type="document",
+    resource_id_key="doc_id",
+    permission="view",
+    spicedb_endpoint="grpc.authzed.com:443",
+    spicedb_token=os.getenv("SPICEDB_TOKEN"),
+    use_tls=True,
+)
+
+# Automatically filters to user's organization
+docs = retriever.invoke("company policies")
 ```
 
 ### Healthcare System
 
-**Scenario**: Doctors can only retrieve patient records they're assigned to.
+**Scenario:** Doctors can only retrieve patient records they're assigned to.
 
 ```python
 retriever = SpiceDBRetriever(
@@ -289,34 +474,17 @@ retriever = SpiceDBRetriever(
     ...
 )
 
-records = retriever.invoke("Show diabetic patients")
+records = retriever.invoke("diabetic patients")
 # Automatically filtered by doctor's patient assignments
-```
-
-### Multi-Tenant SaaS
-
-**Scenario**: Users can only access documents within their organization.
-
-```python
-retriever = SpiceDBRetriever(
-    base_retriever=company_docs_retriever,
-    subject_id=user_id,
-    subject_type="user",
-    resource_type="document",
-    resource_id_key="document_id",
-    permission="view",
-    ...
-)
-
-docs = retriever.invoke("company policies")
-# Only returns docs from user's organization
 ```
 
 ### Content Management System
 
-**Scenario**: Agent checks if user can edit before performing operations.
+**Scenario:** Agent checks if user can edit before performing operations.
 
 ```python
+from langchain.agents import create_tool_calling_agent
+
 agent = create_tool_calling_agent(
     llm=llm,
     tools=[
@@ -335,147 +503,209 @@ result = agent.invoke({
 })
 ```
 
-## Architecture Patterns
-
-### Pattern 1: Authorization at Retrieval Time (Recommended)
-
-```python
-# Authorization happens during document retrieval
-retriever = SpiceDBRetriever(base_retriever=vector_store)
-docs = retriever.invoke(query)  # Already filtered
-
-chain = retriever | prompt | llm
-```
-
-**Pros:**
-- Simple and transparent
-- Works with any vector store
-- Minimal code changes
-
-**Cons:**
-- Additional latency per query
-- May retrieve unauthorized docs unnecessarily
-
-### Pattern 2: Pre-Filtering with Bulk Checks
-
-```python
-# Get all relevant doc IDs first
-candidate_docs = vector_store.similarity_search(query)
-doc_ids = [doc.metadata["id"] for doc in candidate_docs]
-
-# Bulk check permissions
-tool = SpiceDBBulkPermissionTool(...)
-authorized_ids = tool.invoke({
-    "subject_id": user_id,
-    "resource_ids": ",".join(doc_ids),
-    "permission": "view"
-})
-
-# Filter docs
-authorized_docs = [d for d in candidate_docs if d.metadata["id"] in authorized_ids]
-```
-
-**Pros:**
-- Single SpiceDB call for multiple docs
-- Efficient for large result sets
-
-**Cons:**
-- More complex code
-- Still retrieves unauthorized docs
-
-### Pattern 3: Agent-Driven Authorization
-
-```python
-# Agent decides when to check permissions
-agent = create_tool_calling_agent(
-    llm=llm,
-    tools=[permission_tool, other_tools],
-    prompt="Check permissions before taking actions"
-)
-```
-
-**Pros:**
-- Flexible, context-aware authorization
-- Agent can explain permission decisions
-- Works for complex workflows
-
-**Cons:**
-- LLM must be reliable about checking permissions
-- Additional LLM calls
-- Requires function calling support
-
-## Performance Considerations
-
-### Caching
-
-```python
-# Enable caching for repeated permission checks
-from langchain.cache import InMemoryCache
-from langchain.globals import set_llm_cache
-
-set_llm_cache(InMemoryCache())
-```
-
-### Batch Operations
-
-```python
-# Use batch operations when checking multiple queries
-queries = ["query1", "query2", "query3"]
-results = await retriever.abatch(queries)  # Efficient parallel checks
-```
-
-### Fail-Open Mode
-
-```python
-# Allow access on SpiceDB errors (use cautiously!)
-retriever = SpiceDBRetriever(
-    ...,
-    fail_open=True  # Returns all docs if SpiceDB is unavailable
-)
-```
+---
 
 ## Troubleshooting
 
 ### SpiceDB Connection Errors
 
-```
-Error: failed to connect to SpiceDB
-```
+**Error:** `failed to connect to SpiceDB`
 
-**Solution:**
-- Verify SpiceDB is running: `curl http://localhost:50051`
-- Check `SPICEDB_ENDPOINT` environment variable
-- Verify token: `SPICEDB_TOKEN` should match SpiceDB configuration
+**Solutions:**
+1. Verify SpiceDB is running:
+   ```bash
+   docker ps | grep spicedb
+   ```
+2. Check environment variables:
+   ```bash
+   echo $SPICEDB_ENDPOINT
+   echo $SPICEDB_TOKEN
+   ```
+3. Test connection:
+   ```bash
+   zed permission check article:123 view user:tim
+   ```
 
 ### No Documents Returned
 
-```
-Documents after authorization: 0
+**Error:** `Documents after authorization: 0`
+
+**Solutions:**
+1. Verify relationships exist:
+   ```bash
+   zed relationship read article:123
+   ```
+2. Check user ID matches:
+   ```bash
+   echo $SUBJECT_ID
+   ```
+3. Test permission directly:
+   ```bash
+   zed permission check article:123 view user:tim
+   ```
+
+### Schema/Relation Errors
+
+**Error:** `relation not found` or `permission not found`
+
+**Solutions:**
+1. Verify schema is applied:
+   ```bash
+   zed schema read
+   ```
+2. Check resource type and permission names match your schema
+3. Ensure relation names are correct (e.g., "viewer" not "view")
+
+### Invalid Resource ID Error
+
+**Error:** `invalid ObjectReference.ObjectId: value does not match regex pattern`
+
+**Cause:** Resource ID contains invalid characters or spaces
+
+**Solution:** Ensure resource IDs:
+- Contain only alphanumeric characters, hyphens, underscores
+- Don't include spaces or special characters
+- Examples: "123", "article-456", "doc_id_789" ✓
+- Bad examples: "article 123", "doc@456" ✗
+
+### AsyncIO Runtime Error
+
+**Error:** `asyncio.run() cannot be called from a running event loop`
+
+**Solution:** Use `await` with `ainvoke()` instead of `invoke()` in async functions:
+
+```python
+# Wrong (in async function)
+result = tool.invoke({...})
+
+# Correct (in async function)
+result = await tool.ainvoke({...})
 ```
 
-**Solution:**
-- Check relationships exist: `zed relationship read article:123`
-- Verify subject_id matches: Check `SUBJECT_ID` environment variable
-- Test permission: `zed permission check article:123 view user:tim`
+### Port Already in Use
 
-### Schema Errors
+**Error:** `bind: address already in use`
 
+**Solution:** Stop existing SpiceDB or use different port:
+
+```bash
+# Stop existing container
+docker stop $(docker ps -q --filter ancestor=authzed/spicedb)
+
+# Or use different port
+docker run --rm -p 50052:50051 ...
+# Then: export SPICEDB_ENDPOINT=localhost:50052
 ```
-Error: relation not found
+
+---
+
+## Advanced Configuration
+
+### TLS for Production
+
+```python
+retriever = SpiceDBRetriever(
+    ...,
+    use_tls=True,  # Enable TLS
+)
 ```
 
-**Solution:**
-- Verify schema is applied: `zed schema read`
-- Check resource_type and permission names match schema
-- Ensure relation names are correct (e.g., "viewer" not "view")
+Start SpiceDB with TLS:
+
+```bash
+docker run --rm -p 50051:50051 \
+  -v $(pwd)/tls:/tls \
+  authzed/spicedb serve \
+  --grpc-preshared-key "your-token" \
+  --grpc-tls-cert-path /tls/server.crt \
+  --grpc-tls-key-path /tls/server.key
+```
+
+### Batch Size Tuning
+
+Adjust how many resources are checked in parallel:
+
+```python
+retriever = SpiceDBRetriever(
+    ...,
+    batch_size=50,  # Check up to 50 resources at once (default: 10)
+)
+```
+
+Larger batch sizes can improve performance but use more memory.
+
+### Fail-Open Mode
+
+For high availability, allow access if SpiceDB is unavailable:
+
+```python
+retriever = SpiceDBRetriever(
+    ...,
+    fail_open=True,  # Allow access on SpiceDB errors (use cautiously!)
+)
+```
+
+**Warning:** Only use fail-open in specific scenarios where availability is more important than security.
+
+### Custom Subject Types
+
+Support different subject types beyond "user":
+
+```python
+# Service accounts
+retriever = SpiceDBRetriever(
+    ...,
+    subject_type="service",
+    subject_id="api-service-1",
+)
+
+# Organizations
+retriever = SpiceDBRetriever(
+    ...,
+    subject_type="organization",
+    subject_id="acme-corp",
+)
+```
+
+Update your schema accordingly:
+
+```zed
+definition service {}
+definition organization {}
+
+definition document {
+    relation viewer: user | service | organization
+    permission view = viewer
+}
+```
+
+---
 
 ## Additional Resources
 
-- [LangChain Documentation](https://python.langchain.com/)
-- [SpiceDB Documentation](https://authzed.com/docs)
-- [langchain-spicedb GitHub](https://github.com/yourusername/langchain-spicedb)
-- [SpiceDB Playground](https://play.authzed.com)
+- **LangChain Documentation**: https://python.langchain.com/
+- **SpiceDB Documentation**: https://authzed.com/docs
+- **SpiceDB Playground**: https://play.authzed.com (interactive schema design)
+- **langchain-spicedb GitHub**: https://github.com/yourusername/langchain-spicedb
+- **SpiceDB Discord**: https://discord.gg/spicedb
+- **LangChain Discord**: https://discord.gg/langchain
 
-## Contributing
+---
 
-Found an issue or have a suggestion for a new example? Please open an issue or submit a pull request!
+## Next Steps
+
+1. ✅ Complete Quick Start
+2. Run examples with your data
+3. Design your SpiceDB schema for your use case
+4. Integrate into your application
+5. Deploy with SpiceDB Cloud for production
+
+## Questions or Issues?
+
+- Open an issue: https://github.com/yourusername/langchain-spicedb/issues
+- Check SpiceDB docs: https://authzed.com/docs
+- Join Discord communities (links above)
+
+---
+
+**Happy building with langchain-spicedb! 🚀**

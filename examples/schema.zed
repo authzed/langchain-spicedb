@@ -1,0 +1,8 @@
+definition user {}
+
+definition article {
+    relation viewer: user
+    relation editor: user
+    permission view = viewer + editor
+    permission edit = editor
+}

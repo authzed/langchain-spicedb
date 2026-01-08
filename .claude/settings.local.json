@@ -3,7 +3,10 @@
     "allow": [
       "WebFetch(domain:docs.langchain.com)",
       "Bash(python3 -m pytest:*)",
-      "Bash(pip3 show:*)"
+      "Bash(pip3 show:*)",
+      "Bash(python3:*)",
+      "Bash(SPICEDB_ENDPOINT=localhost:50051 SPICEDB_TOKEN=somerandomkeyhere python3 -m pytest:*)",
+      "mcp__docs-langchain__SearchDocsByLangChain"
     ],
     "deny": [],
     "ask": []

@@ -133,7 +133,7 @@ langchain-spicedb integrates [SpiceDB](https://authzed.com) authorization into [
 - ✓ Authorization-aware document retrieval for RAG
 - ✓ Permission checking tools for AI agents
 - ✓ Works with any vector store (Pinecone, Chroma, FAISS, etc.)
-- ✓ Batch permission checks for efficiency
+- ✓ Efficient bulk permission checks using SpiceDB's native API
 - ✓ Async/sync support
 - ✓ Production-ready with TLS and fail-open modes
 
@@ -284,7 +284,7 @@ examples/
 - Wraps any LangChain retriever
 - Transparent authorization filtering
 - Works with vector stores (Pinecone, Chroma, FAISS)
-- Batch operations
+- Single bulk API call for all permission checks
 - Runs without OpenAI for demos
 
 **Run it:**
@@ -621,18 +621,19 @@ docker run --rm -p 50051:50051 \
   --grpc-tls-key-path /tls/server.key
 ```
 
-### Batch Size Tuning
+### Bulk Permission Checks
 
-Adjust how many resources are checked in parallel:
+The library uses SpiceDB's native `CheckBulkPermissionsRequest` API, which checks all resources in a single efficient API call:
 
 ```python
 retriever = SpiceDBRetriever(
     ...,
-    batch_size=50,  # Check up to 50 resources at once (default: 10)
+    # All resources are checked in one bulk API call
+    # No manual tuning needed - automatically optimal
 )
 ```
 
-Larger batch sizes can improve performance but use more memory.
+This is significantly more efficient than making N individual permission checks.
 
 ### Fail-Open Mode
 

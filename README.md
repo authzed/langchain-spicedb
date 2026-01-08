@@ -14,7 +14,7 @@ This package follows [LangChain's official integration guidelines](https://pytho
 - **LangChain & LangGraph Integration**: First-class support for modern LLM frameworks
 - **Vector Store Agnostic**: Compatible with Pinecone, FAISS, Weaviate, Chroma, and more
 - **Post-Filter Authorization**: Filters retrieved documents based on SpiceDB permissions
-- **Batch Processing**: Optimized concurrent permission checks for performance
+- **Efficient Bulk Permissions**: Uses SpiceDB's native bulk API for optimal performance
 - **Observable**: Returns detailed metrics about authorization decisions
 - **Type-Safe**: Full type hints for better IDE support
 - **Async by Default**: Built for high-performance async operations
@@ -333,9 +333,6 @@ authorizer = SpiceDBAuthorizer(
     permission="view",
     resource_id_key="article_id",
 
-    # Performance
-    batch_size=10,                       # Concurrent checks per batch
-
     # Behavior
     fail_open=False,                     # Fail closed by default (deny on errors)
 )
@@ -471,10 +468,19 @@ See the `examples/` directory for complete working examples:
 
 ## Performance Considerations
 
-- **Batch Processing**: Permission checks are batched and run concurrently
-- **Configurable Batch Size**: Adjust `batch_size` based on your SpiceDB setup
+- **Native Bulk API**: Uses SpiceDB's `CheckBulkPermissionsRequest` for optimal performance
+- **Single API Call**: All permission checks happen in one request, not N individual calls
 - **Connection Reuse**: SpiceDB client is reused across checks
 - **Async Operations**: All operations are async for better performance
+
+### Architecture Note
+
+The library uses SpiceDB's native bulk permission checking API (`CheckBulkPermissionsRequest`), which allows checking permissions for multiple resources in a single gRPC call. This is significantly more efficient than the alternative approach of making N individual `CheckPermissionRequest` calls, even when run concurrently.
+
+**Performance Impact:**
+- **Before**: N separate API calls (e.g., 100 documents = 100 API calls)
+- **After**: 1 bulk API call (e.g., 100 documents = 1 API call)
+- **Result**: Lower latency, reduced network overhead, better throughput
 
 
 ## Vector Store Compatibility

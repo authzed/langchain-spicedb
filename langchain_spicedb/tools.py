@@ -11,6 +11,86 @@ from langchain_core.tools import BaseTool
 from .core import SpiceDBAuthorizer
 
 
+class SpiceDBAuthTool(BaseTool):
+    """
+    Base class for SpiceDB authorization tools.
+
+    Provides shared configuration and authorizer management for all tools
+    that interact with SpiceDB for permission checking.
+    """
+
+    spicedb_endpoint: str = Field(
+        default="localhost:50051",
+        description="SpiceDB server address"
+    )
+    spicedb_token: str = Field(
+        default="sometoken",
+        description="Pre-shared key for SpiceDB authentication"
+    )
+    resource_type: str = Field(
+        default="document",
+        description="SpiceDB resource type"
+    )
+    subject_type: str = Field(
+        default="user",
+        description="SpiceDB subject type"
+    )
+    fail_open: bool = Field(
+        default=False,
+        description="If True, allow access on errors"
+    )
+    use_tls: bool = Field(
+        default=False,
+        description="Whether to use TLS for SpiceDB connection"
+    )
+
+    _authorizer: Optional[SpiceDBAuthorizer] = None
+
+    def __init__(
+        self,
+        spicedb_endpoint: str = "localhost:50051",
+        spicedb_token: str = "sometoken",
+        resource_type: str = "document",
+        subject_type: str = "user",
+        fail_open: bool = False,
+        use_tls: bool = False,
+        **kwargs: Any,
+    ):
+        """
+        Initialize SpiceDB authorization tool.
+
+        Args:
+            spicedb_endpoint: SpiceDB server address
+            spicedb_token: Pre-shared key for SpiceDB authentication
+            resource_type: SpiceDB resource type (e.g., 'document', 'article')
+            subject_type: SpiceDB subject type (e.g., 'user')
+            fail_open: If True, allow access on errors
+            use_tls: Whether to use TLS for SpiceDB connection
+            **kwargs: Additional arguments passed to BaseTool
+        """
+        # Pass all fields to parent __init__ for Pydantic v2 compatibility
+        super().__init__(
+            spicedb_endpoint=spicedb_endpoint,
+            spicedb_token=spicedb_token,
+            resource_type=resource_type,
+            subject_type=subject_type,
+            fail_open=fail_open,
+            use_tls=use_tls,
+            **kwargs
+        )
+
+        # Initialize authorizer after Pydantic validation
+        self._authorizer = SpiceDBAuthorizer(
+            spicedb_endpoint=self.spicedb_endpoint,
+            spicedb_token=self.spicedb_token,
+            resource_type=self.resource_type,
+            subject_type=self.subject_type,
+            permission="view",  # Default, can be overridden per call
+            fail_open=self.fail_open,
+            use_tls=self.use_tls,
+        )
+
+
 class SpiceDBPermissionInput(BaseModel):
     """Input schema for SpiceDB permission check tool."""
 
@@ -26,7 +106,7 @@ class SpiceDBPermissionInput(BaseModel):
     )
 
 
-class SpiceDBPermissionTool(BaseTool):
+class SpiceDBPermissionTool(SpiceDBAuthTool):
     """
     LangChain tool for checking SpiceDB permissions in agent workflows.
 
@@ -70,85 +150,6 @@ class SpiceDBPermissionTool(BaseTool):
     - permission: Permission to check (e.g., 'view', 'edit')
     """
     args_schema: Type[BaseModel] = SpiceDBPermissionInput
-
-    spicedb_endpoint: str = Field(
-        default="localhost:50051",
-        description="SpiceDB server address"
-    )
-    spicedb_token: str = Field(
-        default="sometoken",
-        description="Pre-shared key for SpiceDB authentication"
-    )
-    resource_type: str = Field(
-        default="document",
-        description="SpiceDB resource type"
-    )
-    subject_type: str = Field(
-        default="user",
-        description="SpiceDB subject type"
-    )
-    batch_size: int = Field(
-        default=10,
-        description="Number of concurrent permission checks"
-    )
-    fail_open: bool = Field(
-        default=False,
-        description="If True, allow access on errors"
-    )
-    use_tls: bool = Field(
-        default=False,
-        description="Whether to use TLS for SpiceDB connection"
-    )
-
-    _authorizer: Optional[SpiceDBAuthorizer] = None
-
-    def __init__(
-        self,
-        spicedb_endpoint: str = "localhost:50051",
-        spicedb_token: str = "sometoken",
-        resource_type: str = "document",
-        subject_type: str = "user",
-        batch_size: int = 10,
-        fail_open: bool = False,
-        use_tls: bool = False,
-        **kwargs: Any,
-    ):
-        """
-        Initialize SpiceDB permission check tool.
-
-        Args:
-            spicedb_endpoint: SpiceDB server address
-            spicedb_token: Pre-shared key for SpiceDB authentication
-            resource_type: SpiceDB resource type (e.g., 'document', 'article')
-            subject_type: SpiceDB subject type (e.g., 'user')
-            batch_size: Number of concurrent permission checks
-            fail_open: If True, allow access on errors
-            use_tls: Whether to use TLS for SpiceDB connection
-            **kwargs: Additional arguments passed to BaseTool
-        """
-        # Pass all fields to parent __init__ for Pydantic v2 compatibility
-        super().__init__(
-            spicedb_endpoint=spicedb_endpoint,
-            spicedb_token=spicedb_token,
-            resource_type=resource_type,
-            subject_type=subject_type,
-            batch_size=batch_size,
-            fail_open=fail_open,
-            use_tls=use_tls,
-            **kwargs
-        )
-
-        # Initialize authorizer after Pydantic validation
-        self._authorizer = SpiceDBAuthorizer(
-            spicedb_endpoint=self.spicedb_endpoint,
-            spicedb_token=self.spicedb_token,
-            resource_type=self.resource_type,
-            subject_type=self.subject_type,
-            permission="view",  # Default, can be overridden per call
-            batch_size=self.batch_size,
-            fail_open=self.fail_open,
-            use_tls=self.use_tls,
-        )
 
     def _run(
         self,
@@ -212,7 +213,7 @@ class SpiceDBBulkPermissionInput(BaseModel):
     )
 
 
-class SpiceDBBulkPermissionTool(BaseTool):
+class SpiceDBBulkPermissionTool(SpiceDBAuthTool):
     """
     LangChain tool for checking permissions for multiple resources at once.
 
@@ -249,52 +250,6 @@ class SpiceDBBulkPermissionTool(BaseTool):
     - permission: Permission to check (default: 'view')
     """
     args_schema: Type[BaseModel] = SpiceDBBulkPermissionInput
-
-    spicedb_endpoint: str = "localhost:50051"
-    spicedb_token: str = "sometoken"
-    resource_type: str = "document"
-    subject_type: str = "user"
-    batch_size: int = 10
-    fail_open: bool = False
-    use_tls: bool = False
-
-    _authorizer: Optional[SpiceDBAuthorizer] = None
-
-    def __init__(
-        self,
-        spicedb_endpoint: str = "localhost:50051",
-        spicedb_token: str = "sometoken",
-        resource_type: str = "document",
-        subject_type: str = "user",
-        batch_size: int = 10,
-        fail_open: bool = False,
-        use_tls: bool = False,
-        **kwargs: Any,
-    ):
-        """Initialize bulk permission check tool."""
-        # Pass all fields to parent __init__ for Pydantic v2 compatibility
-        super().__init__(
-            spicedb_endpoint=spicedb_endpoint,
-            spicedb_token=spicedb_token,
-            resource_type=resource_type,
-            subject_type=subject_type,
-            batch_size=batch_size,
-            fail_open=fail_open,
-            use_tls=use_tls,
-            **kwargs
-        )
-
-        # Initialize authorizer after Pydantic validation
-        self._authorizer = SpiceDBAuthorizer(
-            spicedb_endpoint=self.spicedb_endpoint,
-            spicedb_token=self.spicedb_token,
-            resource_type=self.resource_type,
-            subject_type=self.subject_type,
-            permission="view",
-            batch_size=self.batch_size,
-            fail_open=self.fail_open,
-            use_tls=self.use_tls,
-        )
 
     def _run(
         self,

@@ -14,6 +14,9 @@ from authzed.api.v1 import (
     Client,
     CheckPermissionRequest,
     CheckPermissionResponse,
+    CheckBulkPermissionsRequest,
+    CheckBulkPermissionsRequestItem,
+    CheckBulkPermissionsResponse,
     ObjectReference,
     SubjectReference,
 )
@@ -76,7 +79,6 @@ class SpiceDBAuthorizer:
         subject_type: str = "user",
         permission: str = "view",
         resource_id_key: str = "resource_id",
-        batch_size: int = 10,
         fail_open: bool = False,
         use_tls: bool = False,
     ):
@@ -90,7 +92,6 @@ class SpiceDBAuthorizer:
             subject_type: SpiceDB subject type (e.g., "user", "service")
             permission: Permission to check (e.g., "view", "edit")
             resource_id_key: Key in document metadata containing resource ID
-            batch_size: Number of concurrent permission checks
             fail_open: If True, allow access on errors; if False, deny on errors
             use_tls: Whether to use TLS for SpiceDB connection
         """
@@ -100,7 +101,6 @@ class SpiceDBAuthorizer:
         self.subject_type = subject_type
         self.permission = permission
         self.resource_id_key = resource_id_key
-        self.batch_size = batch_size
         self.fail_open = fail_open
         self.use_tls = use_tls
 
@@ -256,39 +256,63 @@ class SpiceDBAuthorizer:
         permission: str,
     ) -> List[str]:
         """
-        Check permissions for multiple resources in batches.
+        Check permissions for multiple resources using SpiceDB's native bulk API.
+
+        Uses CheckBulkPermissionsRequest to check all resources in a single
+        API call, which is significantly more efficient than making N individual
+        CheckPermissionRequest calls.
+
+        Args:
+            subject_id: ID of the subject (user)
+            subject_type: Type of the subject (e.g., "user")
+            resource_ids: List of resource IDs to check
+            resource_type: Type of the resources (e.g., "article")
+            permission: Permission to check (e.g., "view")
 
         Returns:
             List of resource IDs that are authorized
         """
-        authorized_ids = []
+        if not resource_ids:
+            return []
 
-        # Process in batches for better performance
-        for i in range(0, len(resource_ids), self.batch_size):
-            batch = resource_ids[i:i + self.batch_size]
-
-            # Check permissions concurrently within batch
-            tasks = [
-                self.check_permission(
-                    subject_id=subject_id,
-                    subject_type=subject_type,
-                    resource_id=rid,
-                    resource_type=resource_type,
+        try:
+            # Create bulk permission check items
+            items = [
+                CheckBulkPermissionsRequestItem(
+                    resource=ObjectReference(
+                        object_type=resource_type,
+                        object_id=str(resource_id),
+                    ),
                     permission=permission,
+                    subject=SubjectReference(
+                        object=ObjectReference(
+                            object_type=subject_type,
+                            object_id=subject_id,
+                        ),
+                    ),
                 )
-                for rid in batch
+                for resource_id in resource_ids
             ]
 
-            results = await asyncio.gather(*tasks, return_exceptions=True)
+            # Make single bulk permission check request
+            response = await self.client.CheckBulkPermissions(
+                CheckBulkPermissionsRequest(items=items)
+            )
 
-            # Collect authorized resource IDs
-            for rid, result in zip(batch, results):
-                if isinstance(result, bool) and result:
-                    authorized_ids.append(rid)
-                elif isinstance(result, Exception) and self.fail_open:
-                    authorized_ids.append(rid)
+            # Extract authorized resource IDs from response
+            authorized_ids = []
+            for i, pair in enumerate(response.pairs):
+                if pair.item.permissionship == CheckPermissionResponse.PERMISSIONSHIP_HAS_PERMISSION:
+                    authorized_ids.append(resource_ids[i])
 
-        return authorized_ids
+            return authorized_ids
+
+        except Exception as e:
+            # Fail-open: return all IDs if configured to do so
+            if self.fail_open:
+                return resource_ids
+            # Fail-closed: return empty list on error
+            return []
 
     def _get_resource_id(self, doc: Any) -> Optional[str]:
         """

@@ -32,10 +32,10 @@ async def main():
     spicedb_endpoint = os.getenv("SPICEDB_ENDPOINT", "localhost:50051")
     spicedb_token = os.getenv("SPICEDB_TOKEN", "somerandomkeyhere")
 
-    print(f"Configuration:")
+    print("Configuration:")
     print(f"  SpiceDB Endpoint: {spicedb_endpoint}")
-    print(f"  Resource Type: article")
-    print(f"  Subject Type: user")
+    print("  Resource Type: article")
+    print("  Subject Type: user")
     print()
 
     # Create SpiceDB permission checking tools
@@ -214,10 +214,10 @@ async def direct_tool_usage():
 
     if can_view == "true":
         print(f"   ✓ User {user} has access to article {article}")
-        print(f"   → Proceeding to show article content...")
+        print("   → Proceeding to show article content...")
     else:
         print(f"   ✗ User {user} does NOT have access to article {article}")
-        print(f"   → Returning 403 Forbidden...")
+        print("   → Returning 403 Forbidden...")
     print()
 
 
@@ -265,7 +265,7 @@ async def multi_permission_workflow():
     if allowed:
         print(f"  User can: {', '.join(allowed)}")
     else:
-        print(f"  User has no permissions on this article")
+        print("  User has no permissions on this article")
     print()
 
 

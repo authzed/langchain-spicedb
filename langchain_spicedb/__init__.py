@@ -38,7 +38,7 @@ __version__ = "0.1.0"
 
 # Import LangChain components (if available)
 try:
-    from .langchain_runnable import SpiceDBAuthFilter, SpiceDBAuthLambda
+    from .langchain_runnable import SpiceDBAuthFilter, SpiceDBAuthLambda  # noqa: F401
     _has_langchain = True
 except ImportError:
     _has_langchain = False

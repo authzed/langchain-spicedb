@@ -68,8 +68,8 @@ async def main():
     print("Configuration:")
     print(f"  SpiceDB Endpoint: {spicedb_endpoint}")
     print(f"  Subject (User): {subject_id}")
-    print(f"  Resource Type: article")
-    print(f"  Permission: view")
+    print("  Resource Type: article")
+    print("  Permission: view")
     print()
 
     # Create base retriever (would typically be a vector store)

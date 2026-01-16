@@ -63,3 +63,12 @@ Homepage = "https://github.com/authzed/langchain-spicedb"
 Documentation = "https://github.com/authzed/langchain-spicedb/blob/main/README.md"
 Repository = "https://github.com/authzed/langchain-spicedb"
 Issues = "https://github.com/authzed/langchain-spicedb/issues"
+
+[tool.ruff]
+line-length = 100
+
+[tool.pytest.ini_options]
+addopts = "-x"
+log_level = "debug"
+minversion = "6.0"
+asyncio_mode = "auto"

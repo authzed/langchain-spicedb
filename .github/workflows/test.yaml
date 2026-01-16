@@ -1,0 +1,46 @@
+---
+name: "Test"
+on:  # yamllint disable-line rule:truthy
+  push:
+    branches:
+      - "main"
+  pull_request:
+    branches: ["*"]
+    types:
+      # NOTE: these are the defaults
+      - "opened"
+      - "synchronize"
+      - "reopened"
+      # NOTE: we add this to let the conversion from draft trigger the workflows
+      - "ready_for_review"
+jobs:
+  pytest:
+    name: "Unit and Integration Tests"
+    runs-on: "ubuntu-latest"
+    strategy:
+      matrix:
+        python-version:
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+    steps:
+      - uses: "actions/checkout@v4"
+      - uses: "authzed/action-spicedb@v1"
+        with:
+          version: "latest"
+      - name: "Set up Python ${{ matrix.python-version }}"
+        uses: "actions/setup-python@v5"
+        with:
+          python-version: "${{ matrix.python-version }}"
+      - name: "Install dependencies"
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: "Run unit tests"
+        run: "pytest tests/unit_tests/ -v"
+      - name: "Run integration tests"
+        run: "pytest tests/integration_tests/ -v"
+        env:
+          SPICEDB_ENDPOINT: "localhost:50051"
+          SPICEDB_TOKEN: "somerandomkeyhere"

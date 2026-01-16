@@ -65,7 +65,7 @@ async def main():
     spicedb_token = os.getenv("SPICEDB_TOKEN", "somerandomkeyhere")
     subject_id = os.getenv("SUBJECT_ID", "alice")  # Change to test different users
 
-    print(f"Configuration:")
+    print("Configuration:")
     print(f"  SpiceDB Endpoint: {spicedb_endpoint}")
     print(f"  Subject (User): {subject_id}")
     print(f"  Resource Type: article")

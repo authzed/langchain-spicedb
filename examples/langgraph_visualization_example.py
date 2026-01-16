@@ -6,10 +6,7 @@ to prove that the authorization node is part of the execution flow.
 """
 
 import asyncio
-from typing import List
 from langchain_core.documents import Document
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, END
 
 from langchain_spicedb import create_auth_node, RAGAuthState
@@ -42,16 +39,11 @@ def generate_node(state: RAGAuthState) -> dict:
     """Generate answer from authorized documents"""
     print(f"🤖 [generate_node] Generating answer from {len(state['authorized_documents'])} authorized docs")
 
-    # Create prompt
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", "Answer based only on the provided context."),
-        ("human", "Question: {question}\n\nContext:\n{context}")
-    ])
-
-    # Format context from authorized documents
-    context = "\n\n".join([doc.page_content for doc in state["authorized_documents"]])
-
     # For demo purposes, return a simple answer without calling LLM
+    # In production, you would:
+    # 1. Format context from state["authorized_documents"]
+    # 2. Create a prompt with the question and context
+    # 3. Call an LLM to generate the answer
     answer = f"Based on {len(state['authorized_documents'])} authorized documents: [Answer would be generated here]"
 
     return {"answer": answer}
@@ -181,9 +173,9 @@ async def main():
         print(mermaid)
         print()
         print("Copy the above to https://mermaid.live to visualize!")
-    except Exception as e:
-        print(f"Note: Mermaid diagram generation requires additional dependencies")
-        print(f"Install with: pip install grandalf")
+    except Exception:
+        print("Note: Mermaid diagram generation requires additional dependencies")
+        print("Install with: pip install grandalf")
     print()
 
     # =========================================================================
@@ -246,12 +238,12 @@ async def main():
 
     print("Graph WITHOUT authorization:")
     print(f"  Nodes: {list(graph_no_auth.nodes.keys())}")
-    print(f"  Flow:  retrieve → generate → END")
+    print("  Flow:  retrieve → generate → END")
     print()
 
     print("Graph WITH authorization:")
     print(f"  Nodes: {list(graph.nodes.keys())}")
-    print(f"  Flow:  retrieve → authorize → generate → END")
+    print("  Flow:  retrieve → authorize → generate → END")
     print()
     print("✅ The 'authorize' node is the key difference!")
     print()

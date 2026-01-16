@@ -9,14 +9,12 @@ or vector store (Pinecone, FAISS, Weaviate, etc.).
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, field
 import time
-import asyncio
 from authzed.api.v1 import (
     Client,
     CheckPermissionRequest,
     CheckPermissionResponse,
     CheckBulkPermissionsRequest,
     CheckBulkPermissionsRequestItem,
-    CheckBulkPermissionsResponse,
     ObjectReference,
     SubjectReference,
 )
@@ -243,7 +241,7 @@ class SpiceDBAuthorizer:
 
             return response.permissionship == CheckPermissionResponse.PERMISSIONSHIP_HAS_PERMISSION
 
-        except Exception as e:
+        except Exception:
             if self.fail_open:
                 return True
             return False
@@ -308,7 +306,7 @@ class SpiceDBAuthorizer:
 
             return authorized_ids
 
-        except Exception as e:
+        except Exception:
             # Fail-open: return all IDs if configured to do so
             if self.fail_open:
                 return resource_ids

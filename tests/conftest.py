@@ -1,6 +1,6 @@
 """Pytest configuration and shared fixtures for langchain-spicedb tests."""
 
-import pytest
+import pytest  # noqa: F401
 
 
 def pytest_configure(config):

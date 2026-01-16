@@ -5,7 +5,7 @@ This module provides LangChain BaseRetriever implementations that wrap
 existing retrievers with SpiceDB authorization.
 """
 
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Any
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.documents import Document
 from langchain_core.callbacks import CallbackManagerForRetrieverRun

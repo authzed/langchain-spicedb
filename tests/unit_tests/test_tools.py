@@ -5,7 +5,7 @@ a real SpiceDB instance.
 """
 
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import AsyncMock, patch
 from langchain_core.tools import BaseTool
 
 from langchain_spicedb import SpiceDBPermissionTool, SpiceDBBulkPermissionTool

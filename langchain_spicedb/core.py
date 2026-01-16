@@ -34,6 +34,7 @@ class AuthorizationResult:
         denied_resource_ids: List of resource IDs that were denied
         check_latency_ms: Total time spent on authorization checks in milliseconds
     """
+
     authorized_documents: List[Any]
     total_retrieved: int
     total_authorized: int
@@ -105,6 +106,7 @@ class SpiceDBAuthorizer:
         # Initialize SpiceDB client
         if use_tls:
             from grpcutil import bearer_token_credentials
+
             credentials = bearer_token_credentials(spicedb_token)
         else:
             credentials = insecure_bearer_token_credentials(spicedb_token)
@@ -179,9 +181,7 @@ class SpiceDBAuthorizer:
         )
 
         # Filter documents
-        authorized_documents = [
-            doc_resource_map[rid] for rid in authorized_ids
-        ]
+        authorized_documents = [doc_resource_map[rid] for rid in authorized_ids]
 
         denied_ids = [rid for rid in doc_resource_map.keys() if rid not in authorized_ids]
 
@@ -294,14 +294,15 @@ class SpiceDBAuthorizer:
             ]
 
             # Make single bulk permission check request (client methods are synchronous)
-            response = self.client.CheckBulkPermissions(
-                CheckBulkPermissionsRequest(items=items)
-            )
+            response = self.client.CheckBulkPermissions(CheckBulkPermissionsRequest(items=items))
 
             # Extract authorized resource IDs from response
             authorized_ids = []
             for i, pair in enumerate(response.pairs):
-                if pair.item.permissionship == CheckPermissionResponse.PERMISSIONSHIP_HAS_PERMISSION:
+                if (
+                    pair.item.permissionship
+                    == CheckPermissionResponse.PERMISSIONSHIP_HAS_PERMISSION
+                ):
                     authorized_ids.append(resource_ids[i])
 
             return authorized_ids
@@ -323,7 +324,7 @@ class SpiceDBAuthorizer:
         Returns:
             Resource ID string or None if not found
         """
-        if not hasattr(doc, 'metadata'):
+        if not hasattr(doc, "metadata"):
             return None
 
         if not isinstance(doc.metadata, dict):

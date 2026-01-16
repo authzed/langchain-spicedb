@@ -11,6 +11,7 @@ print()
 print("1. Testing core module import...")
 try:
     from langchain_spicedb.core import SpiceDBAuthorizer, AuthorizationResult  # noqa: F401
+
     print("   ✅ SpiceDBAuthorizer imported successfully")
     print("   ✅ AuthorizationResult imported successfully")
 except ImportError as e:
@@ -22,6 +23,7 @@ print()
 print("2. Testing LangChain wrapper import...")
 try:
     from langchain_spicedb import SpiceDBAuthFilter, SpiceDBAuthLambda  # noqa: F401
+
     print("   ✅ SpiceDBAuthFilter imported successfully")
     print("   ✅ SpiceDBAuthLambda imported successfully")
 except ImportError as e:
@@ -33,6 +35,7 @@ print()
 print("3. Testing LangGraph wrapper import...")
 try:
     from langchain_spicedb import create_auth_node, AuthorizationNode  # noqa: F401
+
     print("   ✅ create_auth_node imported successfully")
     print("   ✅ AuthorizationNode imported successfully")
 except ImportError as e:
@@ -76,6 +79,7 @@ print()
 print("5. Checking package version...")
 try:
     from langchain_spicedb import __version__
+
     print(f"   ✅ Package version: {__version__}")
 except ImportError:
     print("   ⚠️  Version not found (not critical)")

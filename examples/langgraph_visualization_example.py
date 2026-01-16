@@ -16,15 +16,15 @@ from langchain_spicedb import create_auth_node, RAGAuthState
 sample_docs = [
     Document(
         page_content="Python is a high-level programming language.",
-        metadata={"article_id": "doc1", "topic": "python"}
+        metadata={"article_id": "doc1", "topic": "python"},
     ),
     Document(
         page_content="JavaScript is used for web development.",
-        metadata={"article_id": "doc2", "topic": "javascript"}
+        metadata={"article_id": "doc2", "topic": "javascript"},
     ),
     Document(
         page_content="SpiceDB is an authorization database.",
-        metadata={"article_id": "doc3", "topic": "authorization"}
+        metadata={"article_id": "doc3", "topic": "authorization"},
     ),
 ]
 
@@ -37,7 +37,9 @@ def retrieve_node(state: RAGAuthState) -> dict:
 
 def generate_node(state: RAGAuthState) -> dict:
     """Generate answer from authorized documents"""
-    print(f"🤖 [generate_node] Generating answer from {len(state['authorized_documents'])} authorized docs")
+    print(
+        f"🤖 [generate_node] Generating answer from {len(state['authorized_documents'])} authorized docs"
+    )
 
     # For demo purposes, return a simple answer without calling LLM
     # In production, you would:
@@ -50,9 +52,9 @@ def generate_node(state: RAGAuthState) -> dict:
 
 
 async def main():
-    print("="*80)
+    print("=" * 80)
     print("LangGraph Visualization & Inspection Example")
-    print("="*80)
+    print("=" * 80)
     print()
 
     # =========================================================================
@@ -63,12 +65,15 @@ async def main():
 
     # Add nodes
     graph.add_node("retrieve", retrieve_node)
-    graph.add_node("authorize", create_auth_node(
-        spicedb_endpoint="localhost:50051",
-        spicedb_token="ds1",
-        resource_type="article",
-        resource_id_key="article_id",
-    ))
+    graph.add_node(
+        "authorize",
+        create_auth_node(
+            spicedb_endpoint="localhost:50051",
+            spicedb_token="ds1",
+            resource_type="article",
+            resource_id_key="article_id",
+        ),
+    )
     graph.add_node("generate", generate_node)
 
     # Add edges
@@ -188,15 +193,21 @@ async def main():
     print()
 
     # Run the graph
-    result = await app.ainvoke({
-        "question": "What is Python?",
-        "subject_id": "alice",
-    })
+    result = await app.ainvoke(
+        {
+            "question": "What is Python?",
+            "subject_id": "alice",
+        }
+    )
 
     print()
     print("Execution trace:")
-    print(f"  1. retrieve_node    → retrieved_documents: {len(result.get('retrieved_documents', []))} docs")
-    print(f"  2. authorize_node   → authorized_documents: {len(result.get('authorized_documents', []))} docs")
+    print(
+        f"  1. retrieve_node    → retrieved_documents: {len(result.get('retrieved_documents', []))} docs"
+    )
+    print(
+        f"  2. authorize_node   → authorized_documents: {len(result.get('authorized_documents', []))} docs"
+    )
     print(f"  3. generate_node    → answer: {result.get('answer', 'N/A')[:50]}...")
     print()
 
@@ -252,9 +263,9 @@ async def main():
     # SUMMARY
     # =========================================================================
 
-    print("="*80)
+    print("=" * 80)
     print("SUMMARY: Proof That Authorization Node Exists")
-    print("="*80)
+    print("=" * 80)
     print()
     print("We demonstrated 7 methods to prove the authorization node exists:")
     print()
@@ -278,7 +289,7 @@ if __name__ == "__main__":
     print("1. SpiceDB running on localhost:50051 (optional for this demo)")
     print("2. The demo will show graph structure even without SpiceDB")
     print()
-    print("="*80)
+    print("=" * 80)
     print()
 
     asyncio.run(main())

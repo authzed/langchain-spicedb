@@ -123,7 +123,7 @@ class SpiceDBRetriever(BaseRetriever):
             resource_id_key=resource_id_key,
             fail_open=fail_open,
             use_tls=use_tls,
-            **kwargs
+            **kwargs,
         )
 
         # Initialize authorizer after Pydantic validation
@@ -156,6 +156,7 @@ class SpiceDBRetriever(BaseRetriever):
         """
         # This is the sync version - calls async implementation
         import asyncio
+
         return asyncio.run(self._aget_relevant_documents(query, run_manager=run_manager))
 
     async def _aget_relevant_documents(
@@ -175,15 +176,13 @@ class SpiceDBRetriever(BaseRetriever):
             List of authorized documents
         """
         # 1. Retrieve documents from base retriever
-        if hasattr(self.base_retriever, '_aget_relevant_documents'):
+        if hasattr(self.base_retriever, "_aget_relevant_documents"):
             documents = await self.base_retriever._aget_relevant_documents(
                 query, run_manager=run_manager
             )
         else:
             # Fallback to sync if async not available
-            documents = self.base_retriever._get_relevant_documents(
-                query, run_manager=run_manager
-            )
+            documents = self.base_retriever._get_relevant_documents(query, run_manager=run_manager)
 
         # 2. Filter through SpiceDB
         result = await self._authorizer.filter_documents(

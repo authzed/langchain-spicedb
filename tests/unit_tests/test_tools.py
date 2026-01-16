@@ -72,9 +72,7 @@ class TestSpiceDBPermissionToolUnit:
             resource_type="article",
         )
 
-        result = tool._run(
-            subject_id="alice", resource_id="123", permission="view"
-        )
+        result = tool._run(subject_id="alice", resource_id="123", permission="view")
 
         assert result == "true"
         mock_authorizer.return_value.check_permission.assert_called_once_with(
@@ -91,9 +89,7 @@ class TestSpiceDBPermissionToolUnit:
             resource_type="article",
         )
 
-        result = await tool._arun(
-            subject_id="alice", resource_id="123", permission="view"
-        )
+        result = await tool._arun(subject_id="alice", resource_id="123", permission="view")
 
         assert result == "true"
         # The tool calls check_permission (which is async), not acheck_permission
@@ -124,9 +120,7 @@ class TestSpiceDBPermissionToolUnit:
             resource_type="article",
         )
 
-        result = tool.invoke(
-            {"subject_id": "alice", "resource_id": "123", "permission": "view"}
-        )
+        result = tool.invoke({"subject_id": "alice", "resource_id": "123", "permission": "view"})
 
         assert result == "true"
 
@@ -156,9 +150,7 @@ class TestSpiceDBPermissionToolUnit:
         )
 
         for permission in ["view", "edit", "delete", "admin"]:
-            result = tool._run(
-                subject_id="alice", resource_id="123", permission=permission
-            )
+            result = tool._run(subject_id="alice", resource_id="123", permission=permission)
             assert result in ["true", "false"]
 
     def test_tool_parameters_passed_to_authorizer(self, mock_authorizer):
@@ -177,7 +169,7 @@ class TestSpiceDBPermissionToolUnit:
 
         # Verify key parameters were passed (handle both positional and keyword args)
         call_args = mock_authorizer.call_args
-        if hasattr(call_args, 'kwargs'):
+        if hasattr(call_args, "kwargs"):
             call_kwargs = call_args.kwargs
         else:
             call_kwargs = call_args[1] if len(call_args) > 1 else call_args[0]
@@ -246,9 +238,7 @@ class TestSpiceDBBulkPermissionToolUnit:
             resource_type="article",
         )
 
-        result = tool._run(
-            subject_id="alice", resource_ids="123,456,789", permission="view"
-        )
+        result = tool._run(subject_id="alice", resource_ids="123,456,789", permission="view")
 
         # Result should contain authorized resource IDs
         assert isinstance(result, str)
@@ -268,9 +258,7 @@ class TestSpiceDBBulkPermissionToolUnit:
             resource_type="article",
         )
 
-        result = await tool._arun(
-            subject_id="alice", resource_ids="123,456,789", permission="view"
-        )
+        result = await tool._arun(subject_id="alice", resource_ids="123,456,789", permission="view")
 
         # Result should contain authorized resource IDs
         assert isinstance(result, str)
@@ -306,9 +294,7 @@ class TestSpiceDBBulkPermissionToolUnit:
         )
 
         # Should handle spacing around commas
-        result = tool._run(
-            subject_id="alice", resource_ids="123, 456, 789", permission="view"
-        )
+        result = tool._run(subject_id="alice", resource_ids="123, 456, 789", permission="view")
 
         assert isinstance(result, str)
 
@@ -372,7 +358,10 @@ class TestSpiceDBBulkPermissionToolUnit:
 
     def test_all_allowed_bulk_check(self, mock_authorizer):
         """Test bulk check when all permissions are allowed."""
-        mock_authorizer.return_value._batch_check_permissions.return_value = ["123", "456"]  # All authorized
+        mock_authorizer.return_value._batch_check_permissions.return_value = [
+            "123",
+            "456",
+        ]  # All authorized
 
         tool = SpiceDBBulkPermissionTool(
             spicedb_endpoint="localhost:50051",
@@ -381,9 +370,7 @@ class TestSpiceDBBulkPermissionToolUnit:
             resource_type="article",
         )
 
-        result = tool._run(
-            subject_id="alice", resource_ids="123,456", permission="view"
-        )
+        result = tool._run(subject_id="alice", resource_ids="123,456", permission="view")
 
         assert isinstance(result, str)
         assert "123" in result

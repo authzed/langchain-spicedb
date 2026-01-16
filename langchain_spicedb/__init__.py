@@ -39,6 +39,7 @@ __version__ = "0.1.0"
 # Import LangChain components (if available)
 try:
     from .langchain_runnable import SpiceDBAuthFilter, SpiceDBAuthLambda  # noqa: F401
+
     _has_langchain = True
 except ImportError:
     _has_langchain = False
@@ -46,12 +47,14 @@ except ImportError:
 # Import LangChain standard components (retrievers, tools)
 try:
     from .retrievers import SpiceDBRetriever  # noqa: F401
+
     _has_retrievers = True
 except ImportError:
     _has_retrievers = False
 
 try:
     from .tools import SpiceDBPermissionTool, SpiceDBBulkPermissionTool  # noqa: F401
+
     _has_tools = True
 except ImportError:
     _has_tools = False
@@ -59,6 +62,7 @@ except ImportError:
 # Import LangGraph components (if available)
 try:
     from .langgraph_node import create_auth_node, AuthorizationNode, RAGAuthState  # noqa: F401
+
     _has_langgraph = True
 except ImportError:
     _has_langgraph = False

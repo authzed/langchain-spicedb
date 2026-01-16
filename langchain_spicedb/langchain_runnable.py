@@ -90,6 +90,7 @@ class SpiceDBAuthFilter(Runnable):
         Synchronous invocation (not recommended, use ainvoke instead).
         """
         import asyncio
+
         return asyncio.run(self.ainvoke(input, config))
 
     async def ainvoke(
@@ -144,11 +145,7 @@ class SpiceDBAuthFilter(Runnable):
                 return subject_id
         return self.default_subject_id
 
-    def with_config(
-        self,
-        subject_id: Optional[str] = None,
-        **kwargs
-    ) -> "SpiceDBAuthFilter":
+    def with_config(self, subject_id: Optional[str] = None, **kwargs) -> "SpiceDBAuthFilter":
         """
         Create a new instance with updated configuration.
 

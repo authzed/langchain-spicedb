@@ -33,19 +33,19 @@ class MockVectorStoreRetriever(BaseRetriever):
         return [
             Document(
                 page_content="Python is a high-level programming language known for simplicity and readability.",
-                metadata={"article_id": "123", "title": "Python Basics", "author": "Alice"}
+                metadata={"article_id": "123", "title": "Python Basics", "author": "Alice"},
             ),
             Document(
                 page_content="JavaScript is the language of the web, running in browsers and servers.",
-                metadata={"article_id": "456", "title": "JavaScript Guide", "author": "Bob"}
+                metadata={"article_id": "456", "title": "JavaScript Guide", "author": "Bob"},
             ),
             Document(
                 page_content="Machine learning models can be trained on large datasets to make predictions.",
-                metadata={"article_id": "789", "title": "ML Introduction", "author": "Charlie"}
+                metadata={"article_id": "789", "title": "ML Introduction", "author": "Charlie"},
             ),
             Document(
                 page_content="SpiceDB is a database system for managing fine-grained authorization.",
-                metadata={"article_id": "101", "title": "SpiceDB Overview", "author": "Diana"}
+                metadata={"article_id": "101", "title": "SpiceDB Overview", "author": "Diana"},
             ),
         ]
 
@@ -55,9 +55,9 @@ class MockVectorStoreRetriever(BaseRetriever):
 
 
 async def main():
-    print("="*80)
+    print("=" * 80)
     print("SpiceDBRetriever Example - Authorization-Aware RAG")
-    print("="*80)
+    print("=" * 80)
     print()
 
     # Configuration
@@ -89,31 +89,34 @@ async def main():
     )
 
     # Initialize LLM
-    llm = ChatOpenAI(
-        api_key=os.getenv("OPENAI_API_KEY"),
-        model="gpt-4o-mini",
-        temperature=0
-    )
+    llm = ChatOpenAI(api_key=os.getenv("OPENAI_API_KEY"), model="gpt-4o-mini", temperature=0)
 
     # Create prompt template
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", "You are a helpful assistant. Answer questions based only on the provided context. If the context doesn't contain enough information, say so."),
-        ("human", "Question: {question}\n\nContext:\n{context}")
-    ])
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                "You are a helpful assistant. Answer questions based only on the provided context. If the context doesn't contain enough information, say so.",
+            ),
+            ("human", "Question: {question}\n\nContext:\n{context}"),
+        ]
+    )
 
     # Format documents helper
     def format_docs(docs):
         if not docs:
             return "No authorized documents found."
-        return "\n\n".join(f"Document {i+1}:\n{doc.page_content}" for i, doc in enumerate(docs))
+        return "\n\n".join(f"Document {i + 1}:\n{doc.page_content}" for i, doc in enumerate(docs))
 
     # Build RAG chain with authorization
     # The SpiceDBRetriever automatically filters documents based on permissions
     rag_chain = (
-        RunnableParallel({
-            "context": authorized_retriever | format_docs,
-            "question": RunnablePassthrough(),
-        })
+        RunnableParallel(
+            {
+                "context": authorized_retriever | format_docs,
+                "question": RunnablePassthrough(),
+            }
+        )
         | prompt
         | llm
         | StrOutputParser()
@@ -155,7 +158,7 @@ async def main():
         answer = await rag_chain.ainvoke(query)
         print(f"{answer}")
         print()
-        print("="*80)
+        print("=" * 80)
         print()
 
     # Demonstrate batch retrieval
@@ -178,9 +181,9 @@ async def demo_without_openai():
     """
     Demo that doesn't require OpenAI API key - just shows document filtering
     """
-    print("="*80)
+    print("=" * 80)
     print("SpiceDBRetriever Demo - Document Filtering Only")
-    print("="*80)
+    print("=" * 80)
     print()
 
     spicedb_endpoint = os.getenv("SPICEDB_ENDPOINT", "localhost:50051")
@@ -219,7 +222,9 @@ async def demo_without_openai():
 
     if len(authorized_docs) < len(base_docs):
         print()
-        print(f"SpiceDB filtered out {len(base_docs) - len(authorized_docs)} unauthorized document(s)")
+        print(
+            f"SpiceDB filtered out {len(base_docs) - len(authorized_docs)} unauthorized document(s)"
+        )
     print()
 
 
@@ -229,13 +234,15 @@ if __name__ == "__main__":
     print("1. SpiceDB running on localhost:50051 (or set SPICEDB_ENDPOINT)")
     print("2. Set SPICEDB_TOKEN environment variable")
     print("3. SpiceDB schema configured with 'article' resource type and 'view' permission")
-    print("4. Create test relationships (e.g., zed relationship create article:123 viewer user:tim)")
+    print(
+        "4. Create test relationships (e.g., zed relationship create article:123 viewer user:tim)"
+    )
     print()
     print("Optional:")
     print("5. Set OPENAI_API_KEY for full RAG demo (otherwise run basic demo)")
     print("6. Set SUBJECT_ID to test different users (default: tim)")
     print()
-    print("="*80)
+    print("=" * 80)
     print()
 
     # Check if OpenAI API key is available

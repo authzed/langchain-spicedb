@@ -19,30 +19,14 @@ class SpiceDBAuthTool(BaseTool):
     that interact with SpiceDB for permission checking.
     """
 
-    spicedb_endpoint: str = Field(
-        default="localhost:50051",
-        description="SpiceDB server address"
-    )
+    spicedb_endpoint: str = Field(default="localhost:50051", description="SpiceDB server address")
     spicedb_token: str = Field(
-        default="sometoken",
-        description="Pre-shared key for SpiceDB authentication"
+        default="sometoken", description="Pre-shared key for SpiceDB authentication"
     )
-    resource_type: str = Field(
-        default="document",
-        description="SpiceDB resource type"
-    )
-    subject_type: str = Field(
-        default="user",
-        description="SpiceDB subject type"
-    )
-    fail_open: bool = Field(
-        default=False,
-        description="If True, allow access on errors"
-    )
-    use_tls: bool = Field(
-        default=False,
-        description="Whether to use TLS for SpiceDB connection"
-    )
+    resource_type: str = Field(default="document", description="SpiceDB resource type")
+    subject_type: str = Field(default="user", description="SpiceDB subject type")
+    fail_open: bool = Field(default=False, description="If True, allow access on errors")
+    use_tls: bool = Field(default=False, description="Whether to use TLS for SpiceDB connection")
 
     _authorizer: Optional[SpiceDBAuthorizer] = None
 
@@ -76,7 +60,7 @@ class SpiceDBAuthTool(BaseTool):
             subject_type=subject_type,
             fail_open=fail_open,
             use_tls=use_tls,
-            **kwargs
+            **kwargs,
         )
 
         # Initialize authorizer after Pydantic validation
@@ -101,8 +85,7 @@ class SpiceDBPermissionInput(BaseModel):
         description="ONLY the ID portion of the resource, without the type prefix. Examples: '123', 'doc1', 'article-456'. Do NOT include the resource type (e.g., use '123' not 'article 123' or 'article-123')."
     )
     permission: str = Field(
-        default="view",
-        description="The permission to check (e.g., 'view', 'edit', 'delete')"
+        default="view", description="The permission to check (e.g., 'view', 'edit', 'delete')"
     )
 
 
@@ -169,6 +152,7 @@ class SpiceDBPermissionTool(SpiceDBAuthTool):
             String 'true' if permission granted, 'false' if denied
         """
         import asyncio
+
         result = asyncio.run(self._arun(subject_id, resource_id, permission))
         return result
 
@@ -201,16 +185,11 @@ class SpiceDBPermissionTool(SpiceDBAuthTool):
 class SpiceDBBulkPermissionInput(BaseModel):
     """Input schema for bulk permission check tool."""
 
-    subject_id: str = Field(
-        description="The user ID to check permissions for"
-    )
+    subject_id: str = Field(description="The user ID to check permissions for")
     resource_ids: str = Field(
         description="Comma-separated list of resource IDs (ONLY the ID portions, no type prefix). Examples: '123,456,789' or 'doc1,doc2,doc3'. Do NOT include resource type."
     )
-    permission: str = Field(
-        default="view",
-        description="The permission to check"
-    )
+    permission: str = Field(default="view", description="The permission to check")
 
 
 class SpiceDBBulkPermissionTool(SpiceDBAuthTool):
@@ -259,6 +238,7 @@ class SpiceDBBulkPermissionTool(SpiceDBAuthTool):
     ) -> str:
         """Check permissions for multiple resources."""
         import asyncio
+
         result = asyncio.run(self._arun(subject_id, resource_ids, permission))
         return result
 

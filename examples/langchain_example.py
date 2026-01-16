@@ -20,28 +20,28 @@ load_dotenv()
 
 
 async def main():
-    print("="*80)
+    print("=" * 80)
     print("LangChain + SpiceDB Authorization Example")
-    print("="*80)
+    print("=" * 80)
     print()
 
     # Mock retriever for demonstration
     sample_docs = [
         Document(
             page_content="Python is a high-level programming language known for simplicity.",
-            metadata={"article_id": "doc1", "topic": "python"}
+            metadata={"article_id": "doc1", "topic": "python"},
         ),
         Document(
             page_content="JavaScript is primarily used for web development.",
-            metadata={"article_id": "doc2", "topic": "javascript"}
+            metadata={"article_id": "doc2", "topic": "javascript"},
         ),
         Document(
             page_content="Machine learning enables systems to learn from data.",
-            metadata={"article_id": "doc3", "topic": "ml"}
+            metadata={"article_id": "doc3", "topic": "ml"},
         ),
         Document(
             page_content="SpiceDB is an authorization database for managing permissions.",
-            metadata={"article_id": "doc4", "topic": "authorization"}
+            metadata={"article_id": "doc4", "topic": "authorization"},
         ),
     ]
 
@@ -51,11 +51,7 @@ async def main():
         return sample_docs
 
     # Initialize LLM
-    llm = ChatOpenAI(
-        api_key=os.getenv("OPENAI_API_KEY"),
-        model="gpt-4o-mini",
-        temperature=0
-    )
+    llm = ChatOpenAI(api_key=os.getenv("OPENAI_API_KEY"), model="gpt-4o-mini", temperature=0)
 
     # Initialize SpiceDB authorization filter
     # Note: We're using SpiceDBAuthLambda for use with RunnableLambda
@@ -70,17 +66,24 @@ async def main():
     )
 
     # Create prompt
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", "Answer the question based only on the provided context. If you don't have enough information, say so."),
-        ("human", "Question: {question}\n\nContext:\n{context}")
-    ])
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                "Answer the question based only on the provided context. If you don't have enough information, say so.",
+            ),
+            ("human", "Question: {question}\n\nContext:\n{context}"),
+        ]
+    )
 
     # Build the chain with authorization filter
     chain = (
-        RunnableParallel({
-            "context": RunnableLambda(mock_retriever) | RunnableLambda(auth_filter),
-            "question": RunnablePassthrough(),
-        })
+        RunnableParallel(
+            {
+                "context": RunnableLambda(mock_retriever) | RunnableLambda(auth_filter),
+                "question": RunnablePassthrough(),
+            }
+        )
         | prompt
         | llm
         | StrOutputParser()
@@ -113,7 +116,7 @@ if __name__ == "__main__":
     print("Note: This example uses 'alice' as the subject_id.")
     print("      Modify the auth_filter initialization to test other users.")
     print()
-    print("="*80)
+    print("=" * 80)
     print()
 
     asyncio.run(main())

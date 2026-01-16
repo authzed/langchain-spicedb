@@ -200,9 +200,7 @@ class TestSpiceDBRetrieverUnit:
         docs = retriever.invoke("test query")
         assert isinstance(docs, list)
 
-    def test_retriever_with_different_permissions(
-        self, mock_base_retriever, mock_authorizer
-    ):
+    def test_retriever_with_different_permissions(self, mock_base_retriever, mock_authorizer):
         """Test retriever with different permission types."""
         for permission in ["view", "edit", "delete", "admin"]:
             retriever = SpiceDBRetriever(
@@ -218,9 +216,7 @@ class TestSpiceDBRetrieverUnit:
 
             assert retriever.permission == permission
 
-    def test_retriever_with_different_subject_types(
-        self, mock_base_retriever, mock_authorizer
-    ):
+    def test_retriever_with_different_subject_types(self, mock_base_retriever, mock_authorizer):
         """Test retriever with different subject types."""
         for subject_type in ["user", "service", "organization"]:
             retriever = SpiceDBRetriever(
@@ -236,9 +232,7 @@ class TestSpiceDBRetrieverUnit:
 
             assert retriever.subject_type == subject_type
 
-    def test_retriever_parameters_passed_to_authorizer(
-        self, mock_base_retriever, mock_authorizer
-    ):
+    def test_retriever_parameters_passed_to_authorizer(self, mock_base_retriever, mock_authorizer):
         """Test that retriever parameters are correctly passed to authorizer."""
         SpiceDBRetriever(
             base_retriever=mock_base_retriever,
@@ -259,7 +253,7 @@ class TestSpiceDBRetrieverUnit:
         # Verify key parameters were passed (handle both positional and keyword args)
         call_args = mock_authorizer.call_args
         # call_args is a tuple of (args, kwargs) or call object
-        if hasattr(call_args, 'kwargs'):
+        if hasattr(call_args, "kwargs"):
             call_kwargs = call_args.kwargs
         else:
             call_kwargs = call_args[1] if len(call_args) > 1 else call_args[0]

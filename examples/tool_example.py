@@ -23,9 +23,9 @@ load_dotenv()
 
 
 async def main():
-    print("="*80)
+    print("=" * 80)
     print("SpiceDBPermissionTool Example - Authorization-Aware Agent")
-    print("="*80)
+    print("=" * 80)
     print()
 
     # Configuration
@@ -56,15 +56,14 @@ async def main():
     )
 
     # Initialize LLM
-    llm = ChatOpenAI(
-        api_key=os.getenv("OPENAI_API_KEY"),
-        model="gpt-4o-mini",
-        temperature=0
-    )
+    llm = ChatOpenAI(api_key=os.getenv("OPENAI_API_KEY"), model="gpt-4o-mini", temperature=0)
 
     # Create agent prompt
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", """You are a helpful assistant that helps users understand their permissions.
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                """You are a helpful assistant that helps users understand their permissions.
 
 You have access to tools that check permissions in our authorization system (SpiceDB).
 
@@ -79,10 +78,12 @@ When a user asks about accessing resources:
 
 Available resource types: article
 Available permissions: view, edit, delete
-"""),
-        ("human", "{input}"),
-        MessagesPlaceholder(variable_name="agent_scratchpad"),
-    ])
+""",
+            ),
+            ("human", "{input}"),
+            MessagesPlaceholder(variable_name="agent_scratchpad"),
+        ]
+    )
 
     # Create agent with SpiceDB tools
     tools = [permission_tool, bulk_permission_tool]
@@ -94,12 +95,10 @@ Available permissions: view, edit, delete
     print("-" * 80)
     print()
 
-    result = await agent_executor.ainvoke({
-        "input": "Can user tim view article 123?"
-    })
+    result = await agent_executor.ainvoke({"input": "Can user tim view article 123?"})
     print(f"\nAgent Response:\n{result['output']}")
     print()
-    print("="*80)
+    print("=" * 80)
     print()
 
     print("-" * 80)
@@ -107,12 +106,12 @@ Available permissions: view, edit, delete
     print("-" * 80)
     print()
 
-    result = await agent_executor.ainvoke({
-        "input": "Which of these articles can user tim view: 123, 456, 789?"
-    })
+    result = await agent_executor.ainvoke(
+        {"input": "Which of these articles can user tim view: 123, 456, 789?"}
+    )
     print(f"\nAgent Response:\n{result['output']}")
     print()
-    print("="*80)
+    print("=" * 80)
     print()
 
     print("-" * 80)
@@ -120,12 +119,10 @@ Available permissions: view, edit, delete
     print("-" * 80)
     print()
 
-    result = await agent_executor.ainvoke({
-        "input": "Can user alice edit article 123?"
-    })
+    result = await agent_executor.ainvoke({"input": "Can user alice edit article 123?"})
     print(f"\nAgent Response:\n{result['output']}")
     print()
-    print("="*80)
+    print("=" * 80)
     print()
 
     print("-" * 80)
@@ -133,12 +130,14 @@ Available permissions: view, edit, delete
     print("-" * 80)
     print()
 
-    result = await agent_executor.ainvoke({
-        "input": "User bob wants to delete article 456. Check if they have permission and let me know what to tell them."
-    })
+    result = await agent_executor.ainvoke(
+        {
+            "input": "User bob wants to delete article 456. Check if they have permission and let me know what to tell them."
+        }
+    )
     print(f"\nAgent Response:\n{result['output']}")
     print()
-    print("="*80)
+    print("=" * 80)
     print()
 
 
@@ -146,9 +145,9 @@ async def direct_tool_usage():
     """
     Example showing direct tool usage without an agent
     """
-    print("="*80)
+    print("=" * 80)
     print("Direct Tool Usage Example - No Agent Required")
-    print("="*80)
+    print("=" * 80)
     print()
 
     spicedb_endpoint = os.getenv("SPICEDB_ENDPOINT", "localhost:50051")
@@ -167,21 +166,17 @@ async def direct_tool_usage():
 
     # Direct async check 1
     print("1. Async check - Can tim view article 123?")
-    result = await permission_tool.ainvoke({
-        "subject_id": "tim",
-        "resource_id": "123",
-        "permission": "view"
-    })
+    result = await permission_tool.ainvoke(
+        {"subject_id": "tim", "resource_id": "123", "permission": "view"}
+    )
     print(f"   Result: {result}")
     print()
 
     # Direct async check 2
     print("2. Async check - Can alice view article 456?")
-    result = await permission_tool.ainvoke({
-        "subject_id": "alice",
-        "resource_id": "456",
-        "permission": "view"
-    })
+    result = await permission_tool.ainvoke(
+        {"subject_id": "alice", "resource_id": "456", "permission": "view"}
+    )
     print(f"   Result: {result}")
     print()
 
@@ -194,11 +189,9 @@ async def direct_tool_usage():
     )
 
     print("3. Bulk check - Which articles can tim view?")
-    result = await bulk_tool.ainvoke({
-        "subject_id": "tim",
-        "resource_ids": "123,456,789",
-        "permission": "view"
-    })
+    result = await bulk_tool.ainvoke(
+        {"subject_id": "tim", "resource_ids": "123,456,789", "permission": "view"}
+    )
     print(f"   Result: {result}")
     print()
 
@@ -206,11 +199,9 @@ async def direct_tool_usage():
     print("4. Using permission check in application logic:")
     user = "tim"
     article = "123"
-    can_view = await permission_tool.ainvoke({
-        "subject_id": user,
-        "resource_id": article,
-        "permission": "view"
-    })
+    can_view = await permission_tool.ainvoke(
+        {"subject_id": user, "resource_id": article, "permission": "view"}
+    )
 
     if can_view == "true":
         print(f"   ✓ User {user} has access to article {article}")
@@ -225,9 +216,9 @@ async def multi_permission_workflow():
     """
     Example showing a workflow that checks multiple permission types
     """
-    print("="*80)
+    print("=" * 80)
     print("Multi-Permission Workflow Example")
-    print("="*80)
+    print("=" * 80)
     print()
 
     spicedb_endpoint = os.getenv("SPICEDB_ENDPOINT", "localhost:50051")
@@ -250,11 +241,9 @@ async def multi_permission_workflow():
     results = {}
 
     for permission in permissions:
-        result = await tool.ainvoke({
-            "subject_id": user,
-            "resource_id": article,
-            "permission": permission
-        })
+        result = await tool.ainvoke(
+            {"subject_id": user, "resource_id": article, "permission": permission}
+        )
         results[permission] = result == "true"
         status = "✓" if results[permission] else "✗"
         print(f"  {status} {permission}")
@@ -275,12 +264,14 @@ if __name__ == "__main__":
     print("1. SpiceDB running on localhost:50051 (or set SPICEDB_ENDPOINT)")
     print("2. Set SPICEDB_TOKEN environment variable")
     print("3. SpiceDB schema configured with 'article' resource type")
-    print("4. Test relationships created (e.g., zed relationship create article:123 viewer user:tim)")
+    print(
+        "4. Test relationships created (e.g., zed relationship create article:123 viewer user:tim)"
+    )
     print()
     print("For agent examples:")
     print("5. Set OPENAI_API_KEY environment variable")
     print()
-    print("="*80)
+    print("=" * 80)
     print()
 
     if os.getenv("OPENAI_API_KEY"):

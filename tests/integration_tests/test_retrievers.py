@@ -88,9 +88,7 @@ class TestSpiceDBRetrieverIntegration:
         reason="SPICEDB_ENDPOINT not set - skipping integration test",
     )
     @pytest.mark.asyncio
-    async def test_async_retriever_with_real_spicedb(
-        self, base_retriever, spicedb_config
-    ):
+    async def test_async_retriever_with_real_spicedb(self, base_retriever, spicedb_config):
         """Test async retriever with real SpiceDB instance."""
         retriever = SpiceDBRetriever(
             base_retriever=base_retriever,
@@ -138,9 +136,7 @@ class TestSpiceDBRetrieverIntegration:
         reason="SPICEDB_ENDPOINT not set - skipping integration test",
     )
     @pytest.mark.asyncio
-    async def test_async_batch_retrieval_integration(
-        self, base_retriever, spicedb_config
-    ):
+    async def test_async_batch_retrieval_integration(self, base_retriever, spicedb_config):
         """Test async batch retrieval with real SpiceDB."""
         retriever = SpiceDBRetriever(
             base_retriever=base_retriever,
@@ -162,9 +158,7 @@ class TestSpiceDBRetrieverIntegration:
         not os.getenv("SPICEDB_ENDPOINT"),
         reason="SPICEDB_ENDPOINT not set - skipping integration test",
     )
-    def test_retriever_filters_unauthorized_documents(
-        self, base_retriever, spicedb_config
-    ):
+    def test_retriever_filters_unauthorized_documents(self, base_retriever, spicedb_config):
         """Test that retriever correctly filters out unauthorized documents."""
         # User with limited permissions
         retriever = SpiceDBRetriever(
@@ -187,9 +181,7 @@ class TestSpiceDBRetrieverIntegration:
         not os.getenv("SPICEDB_ENDPOINT"),
         reason="SPICEDB_ENDPOINT not set - skipping integration test",
     )
-    def test_retriever_with_different_permissions(
-        self, base_retriever, spicedb_config
-    ):
+    def test_retriever_with_different_permissions(self, base_retriever, spicedb_config):
         """Test retriever with different permission types."""
         for permission in ["view", "edit"]:
             retriever = SpiceDBRetriever(

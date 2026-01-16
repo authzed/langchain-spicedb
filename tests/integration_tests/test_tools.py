@@ -57,9 +57,7 @@ class TestSpiceDBPermissionToolIntegration:
         )
 
         # Check permission for a test resource
-        result = await tool._arun(
-            subject_id="tim", resource_id="123", permission="view"
-        )
+        result = await tool._arun(subject_id="tim", resource_id="123", permission="view")
 
         # Result should be "true" or "false"
         assert result in ["true", "false"]
@@ -78,9 +76,7 @@ class TestSpiceDBPermissionToolIntegration:
 
         # Check multiple resources
         for resource_id in ["123", "456", "789"]:
-            result = tool._run(
-                subject_id="tim", resource_id=resource_id, permission="view"
-            )
+            result = tool._run(subject_id="tim", resource_id=resource_id, permission="view")
             assert result in ["true", "false"]
 
     @pytest.mark.skipif(
@@ -97,9 +93,7 @@ class TestSpiceDBPermissionToolIntegration:
 
         # Check different permissions
         for permission in ["view", "edit"]:
-            result = tool._run(
-                subject_id="tim", resource_id="123", permission=permission
-            )
+            result = tool._run(subject_id="tim", resource_id="123", permission=permission)
             assert result in ["true", "false"]
 
     @pytest.mark.skipif(
@@ -116,9 +110,7 @@ class TestSpiceDBPermissionToolIntegration:
 
         # Check for different users
         for subject_id in ["tim", "alice", "bob"]:
-            result = tool._run(
-                subject_id=subject_id, resource_id="123", permission="view"
-            )
+            result = tool._run(subject_id=subject_id, resource_id="123", permission="view")
             assert result in ["true", "false"]
 
     @pytest.mark.skipif(
@@ -133,9 +125,7 @@ class TestSpiceDBPermissionToolIntegration:
             **spicedb_config,
         )
 
-        result = tool.invoke(
-            {"subject_id": "tim", "resource_id": "123", "permission": "view"}
-        )
+        result = tool.invoke({"subject_id": "tim", "resource_id": "123", "permission": "view"})
 
         assert result in ["true", "false"]
 
@@ -210,9 +200,7 @@ class TestSpiceDBBulkPermissionToolIntegration:
         )
 
         # Check permissions for multiple resources
-        result = tool._run(
-            subject_id="tim", resource_ids="123,456", permission="view"
-        )
+        result = tool._run(subject_id="tim", resource_ids="123,456", permission="view")
 
         # Result should contain permission results - either success or failure
         assert isinstance(result, str)
@@ -233,9 +221,7 @@ class TestSpiceDBBulkPermissionToolIntegration:
         )
 
         # Check permissions for multiple resources
-        result = await tool._arun(
-            subject_id="tim", resource_ids="123,456", permission="view"
-        )
+        result = await tool._arun(subject_id="tim", resource_ids="123,456", permission="view")
 
         # Result should contain permission results - either success or failure
         assert isinstance(result, str)
@@ -272,9 +258,7 @@ class TestSpiceDBBulkPermissionToolIntegration:
         )
 
         # Should handle spacing around commas
-        result = tool._run(
-            subject_id="tim", resource_ids="123, 456", permission="view"
-        )
+        result = tool._run(subject_id="tim", resource_ids="123, 456", permission="view")
 
         assert isinstance(result, str)
         # Should contain either resource IDs (if authorized) or "cannot access" (if not)
@@ -293,9 +277,7 @@ class TestSpiceDBBulkPermissionToolIntegration:
         )
 
         for subject_id in ["tim", "alice", "bob"]:
-            result = tool._run(
-                subject_id=subject_id, resource_ids="123,456", permission="view"
-            )
+            result = tool._run(subject_id=subject_id, resource_ids="123,456", permission="view")
             assert isinstance(result, str)
             # Should contain either resource IDs (if authorized) or "cannot access" (if not)
             assert "123" in result or "456" in result or "cannot access" in result
@@ -364,9 +346,7 @@ class TestSpiceDBBulkPermissionToolIntegration:
                 **spicedb_config,
             )
 
-            result = tool._run(
-                subject_id="tim", resource_ids="123,456", permission="view"
-            )
+            result = tool._run(subject_id="tim", resource_ids="123,456", permission="view")
             assert isinstance(result, str)
 
     @pytest.mark.skipif(
@@ -383,7 +363,5 @@ class TestSpiceDBBulkPermissionToolIntegration:
         )
 
         # Should not raise errors even if SpiceDB has issues
-        result = tool._run(
-            subject_id="tim", resource_ids="123,456", permission="view"
-        )
+        result = tool._run(subject_id="tim", resource_ids="123,456", permission="view")
         assert isinstance(result, str)

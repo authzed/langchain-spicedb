@@ -27,6 +27,7 @@ class RAGAuthState(TypedDict, total=False):
         ...     custom_field: str
         ...     another_field: int
     """
+
     # Input fields (required for authorization)
     retrieved_documents: List[Any]
     subject_id: str

@@ -8,15 +8,15 @@ version = "0.1.0"
 description = "SpiceDB authorization for LangChain RAG pipelines and agents - fine-grained access control for AI applications"
 readme = "README.md"
 requires-python = ">=3.9"
-license = {text = "MIT"}
+license = {text = "Apache-2.0"}
 authors = [
-    {name = "Your Name", email = "your.email@example.com"}
+    {name = "Sohan Maheshwar", email = "sohan.maheshwar@authzed.com"}
 ]
 keywords = ["langchain", "spicedb", "authorization", "rag", "ai", "llm", "permissions", "langgraph"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -59,7 +59,7 @@ test = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/spicedb-rag-auth"
-Documentation = "https://github.com/yourusername/spicedb-rag-auth#readme"
-Repository = "https://github.com/yourusername/spicedb-rag-auth"
-Issues = "https://github.com/yourusername/spicedb-rag-auth/issues"
+Homepage = "https://github.com/authzed/langchain-spicedb"
+Documentation = "https://github.com/authzed/langchain-spicedb/blob/main/README.md"
+Repository = "https://github.com/authzed/langchain-spicedb"
+Issues = "https://github.com/authzed/langchain-spicedb/issues"

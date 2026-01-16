@@ -231,26 +231,6 @@ class TestSpiceDBRetrieverIntegration:
         not os.getenv("SPICEDB_ENDPOINT"),
         reason="SPICEDB_ENDPOINT not set - skipping integration test",
     )
-    def test_retriever_with_custom_batch_size(self, base_retriever, spicedb_config):
-        """Test retriever with custom batch size for permission checks."""
-        retriever = SpiceDBRetriever(
-            base_retriever=base_retriever,
-            subject_id="tim",
-            subject_type="user",
-            resource_type="article",
-            resource_id_key="article_id",
-            permission="view",
-            batch_size=2,  # Smaller batch for testing
-            **spicedb_config,
-        )
-
-        docs = retriever.invoke("test query")
-        assert isinstance(docs, list)
-
-    @pytest.mark.skipif(
-        not os.getenv("SPICEDB_ENDPOINT"),
-        reason="SPICEDB_ENDPOINT not set - skipping integration test",
-    )
     def test_retriever_fail_open_behavior(self, base_retriever, spicedb_config):
         """Test retriever with fail_open=True."""
         retriever = SpiceDBRetriever(

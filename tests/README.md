@@ -147,9 +147,9 @@ Create test relationships in SpiceDB:
 zed schema write tests/schema.zed
 
 # Create test relationships
-zed relationship create article:123 view user:tim
-zed relationship create article:456 view user:tim
-zed relationship create article:789 view user:alice
+zed relationship create article:123 viewer user:tim
+zed relationship create article:456 viewer user:tim
+zed relationship create article:789 viewer user:alice
 ```
 
 ## Continuous Integration

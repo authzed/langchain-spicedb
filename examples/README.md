@@ -164,11 +164,11 @@ docs = retriever.invoke("query")  # Returns only authorized documents
 ### Install langchain-spicedb
 
 ```bash
-# From PyPI (when published)
+# From PyPI
 pip install langchain-spicedb
 
 # Or from source
-git clone https://github.com/sohanmaheshwar/spicedb-rag-authorization/tree/langchain
+git clone https://github.com/authzed/langchain-spicedb.git
 cd langchain-spicedb
 pip install -e ".[all]"
 ```
@@ -687,7 +687,7 @@ definition document {
 - **LangChain Documentation**: https://python.langchain.com/
 - **SpiceDB Documentation**: https://authzed.com/docs
 - **SpiceDB Playground**: https://play.authzed.com (interactive schema design)
-- **langchain-spicedb GitHub**: https://github.com/yourusername/langchain-spicedb
+- **langchain-spicedb GitHub**: https://github.com/authzed/langchain-spicedb
 - **SpiceDB Discord**: https://discord.gg/spicedb
 - **LangChain Discord**: https://discord.gg/langchain
 
@@ -703,7 +703,7 @@ definition document {
 
 ## Questions or Issues?
 
-- Open an issue: https://github.com/yourusername/langchain-spicedb/issues
+- Open an issue: https://github.com/authzed/langchain-spicedb/issues
 - Check SpiceDB docs: https://authzed.com/docs
 - Join Discord communities (links above)
 

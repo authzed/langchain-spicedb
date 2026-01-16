@@ -353,27 +353,6 @@ class TestSpiceDBBulkPermissionToolIntegration:
         not os.getenv("SPICEDB_ENDPOINT"),
         reason="SPICEDB_ENDPOINT not set - skipping integration test",
     )
-    def test_bulk_tool_with_custom_batch_size(self, spicedb_config):
-        """Test bulk tool with custom batch size."""
-        tool = SpiceDBBulkPermissionTool(
-            subject_type="user",
-            resource_type="article",
-            batch_size=2,  # Small batch for testing
-            **spicedb_config,
-        )
-
-        result = tool._run(
-            subject_id="tim", resource_ids="123,456", permission="view"
-        )
-
-        assert isinstance(result, str)
-        # Should contain either resource IDs (if authorized) or "cannot access" (if not)
-        assert "123" in result or "456" in result or "cannot access" in result
-
-    @pytest.mark.skipif(
-        not os.getenv("SPICEDB_ENDPOINT"),
-        reason="SPICEDB_ENDPOINT not set - skipping integration test",
-    )
     def test_bulk_tool_with_tls(self, spicedb_config):
         """Test bulk tool with TLS enabled (if endpoint supports it)."""
         # Only test if we're connecting to a non-localhost endpoint

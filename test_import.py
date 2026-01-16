@@ -54,7 +54,6 @@ try:
     print(f"      - Resource type: {authorizer.resource_type}")
     print(f"      - Subject type: {authorizer.subject_type}")
     print(f"      - Permission: {authorizer.permission}")
-    print(f"      - Batch size: {authorizer.batch_size}")
 except Exception as e:
     print(f"   ❌ Failed to instantiate SpiceDBAuthorizer: {e}")
     exit(1)

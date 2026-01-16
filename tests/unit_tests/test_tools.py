@@ -168,7 +168,6 @@ class TestSpiceDBPermissionToolUnit:
             spicedb_token="custom_token",
             subject_type="service",
             resource_type="document",
-            batch_size=20,
             fail_open=True,
             use_tls=True,
         )

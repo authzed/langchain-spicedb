@@ -249,7 +249,6 @@ class TestSpiceDBRetrieverUnit:
             resource_type="document",
             resource_id_key="doc_id",
             permission="edit",
-            batch_size=20,
             fail_open=True,
             use_tls=True,
         )

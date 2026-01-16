@@ -19,6 +19,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+duckduckgo.py
 
 # Virtual environments
 venv/
@@ -55,3 +56,5 @@ Thumbs.db
 docs/_build/
 claude_notes.md
 claude.md
+
+.claude

@@ -131,7 +131,9 @@ async def main():
         # Sort edges in execution order (topological sort approximation)
         # Order nodes by their position in the flow
         node_order = {"__start__": 0, "retrieve": 1, "authorize": 2, "generate": 3, "__end__": 4}
-        sorted_edges = sorted(edges, key=lambda e: (node_order.get(e[0], 999), node_order.get(e[1], 999)))
+        sorted_edges = sorted(
+            edges, key=lambda e: (node_order.get(e[0], 999), node_order.get(e[1], 999))
+        )
         for edge in sorted_edges:
             print(f"  {edge[0]} → {edge[1]}")
     elif isinstance(edges, dict):

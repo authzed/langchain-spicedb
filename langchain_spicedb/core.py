@@ -222,8 +222,8 @@ class SpiceDBAuthorizer:
         permission = permission or self.permission
 
         try:
-            # Client methods are synchronous (blocking gRPC calls)
-            response = self.client.CheckPermission(
+            # Await the async gRPC call
+            response = await self.client.CheckPermission(
                 CheckPermissionRequest(
                     resource=ObjectReference(
                         object_type=resource_type,
@@ -293,8 +293,10 @@ class SpiceDBAuthorizer:
                 for resource_id in resource_ids
             ]
 
-            # Make single bulk permission check request (client methods are synchronous)
-            response = self.client.CheckBulkPermissions(CheckBulkPermissionsRequest(items=items))
+            # Make single bulk permission check request (await async gRPC call)
+            response = await self.client.CheckBulkPermissions(
+                CheckBulkPermissionsRequest(items=items)
+            )
 
             # Extract authorized resource IDs from response
             authorized_ids = []

@@ -6,25 +6,29 @@ to prove that the authorization node is part of the execution flow.
 """
 
 import asyncio
+import os
+from dotenv import load_dotenv
 from langchain_core.documents import Document
 from langgraph.graph import StateGraph, END
 
 from langchain_spicedb import create_auth_node, RAGAuthState
+
+load_dotenv()
 
 
 # Mock retriever for demonstration
 sample_docs = [
     Document(
         page_content="Python is a high-level programming language.",
-        metadata={"article_id": "doc1", "topic": "python"},
+        metadata={"article_id": "123", "topic": "python"},
     ),
     Document(
         page_content="JavaScript is used for web development.",
-        metadata={"article_id": "doc2", "topic": "javascript"},
+        metadata={"article_id": "456", "topic": "javascript"},
     ),
     Document(
         page_content="SpiceDB is an authorization database.",
-        metadata={"article_id": "doc3", "topic": "authorization"},
+        metadata={"article_id": "101", "topic": "authorization"},
     ),
 ]
 
@@ -57,6 +61,11 @@ async def main():
     print("=" * 80)
     print()
 
+    # Configuration
+    spicedb_endpoint = os.getenv("SPICEDB_ENDPOINT", "localhost:50051")
+    spicedb_token = os.getenv("SPICEDB_TOKEN", "somerandomkeyhere")
+    subject_id = os.getenv("SUBJECT_ID", "alice")
+
     # =========================================================================
     # BUILD THE GRAPH
     # =========================================================================
@@ -68,8 +77,8 @@ async def main():
     graph.add_node(
         "authorize",
         create_auth_node(
-            spicedb_endpoint="localhost:50051",
-            spicedb_token="ds1",
+            spicedb_endpoint=spicedb_endpoint,
+            spicedb_token=spicedb_token,
             resource_type="article",
             resource_id_key="article_id",
         ),
@@ -119,8 +128,11 @@ async def main():
     edges = graph.edges
     print("Execution flow:")
     if isinstance(edges, set):
-        # edges is a set of tuples (source, target)
-        for edge in sorted(edges):
+        # Sort edges in execution order (topological sort approximation)
+        # Order nodes by their position in the flow
+        node_order = {"__start__": 0, "retrieve": 1, "authorize": 2, "generate": 3, "__end__": 4}
+        sorted_edges = sorted(edges, key=lambda e: (node_order.get(e[0], 999), node_order.get(e[1], 999)))
+        for edge in sorted_edges:
             print(f"  {edge[0]} → {edge[1]}")
     elif isinstance(edges, dict):
         # edges is a dict {source: target(s)}
@@ -196,7 +208,7 @@ async def main():
     result = await app.ainvoke(
         {
             "question": "What is Python?",
-            "subject_id": "alice",
+            "subject_id": subject_id,
         }
     )
 
@@ -288,6 +300,11 @@ if __name__ == "__main__":
     print("Prerequisites:")
     print("1. SpiceDB running on localhost:50051 (optional for this demo)")
     print("2. The demo will show graph structure even without SpiceDB")
+    print()
+    print("Optional Configuration (via environment variables or .env file):")
+    print("  SPICEDB_ENDPOINT=localhost:50051")
+    print("  SPICEDB_TOKEN=somerandomkeyhere")
+    print("  SUBJECT_ID=alice")
     print()
     print("=" * 80)
     print()

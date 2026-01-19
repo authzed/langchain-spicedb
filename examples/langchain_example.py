@@ -25,23 +25,28 @@ async def main():
     print("=" * 80)
     print()
 
+    # Configuration
+    spicedb_endpoint = os.getenv("SPICEDB_ENDPOINT", "localhost:50051")
+    spicedb_token = os.getenv("SPICEDB_TOKEN", "somerandomkeyhere")
+    subject_id = os.getenv("SUBJECT_ID", "alice")
+
     # Mock retriever for demonstration
     sample_docs = [
         Document(
             page_content="Python is a high-level programming language known for simplicity.",
-            metadata={"article_id": "doc1", "topic": "python"},
+            metadata={"article_id": "123", "topic": "python"},
         ),
         Document(
             page_content="JavaScript is primarily used for web development.",
-            metadata={"article_id": "doc2", "topic": "javascript"},
+            metadata={"article_id": "456", "topic": "javascript"},
         ),
         Document(
             page_content="Machine learning enables systems to learn from data.",
-            metadata={"article_id": "doc3", "topic": "ml"},
+            metadata={"article_id": "789", "topic": "ml"},
         ),
         Document(
             page_content="SpiceDB is an authorization database for managing permissions.",
-            metadata={"article_id": "doc4", "topic": "authorization"},
+            metadata={"article_id": "101", "topic": "authorization"},
         ),
     ]
 
@@ -56,13 +61,13 @@ async def main():
     # Initialize SpiceDB authorization filter
     # Note: We're using SpiceDBAuthLambda for use with RunnableLambda
     auth_filter = SpiceDBAuthLambda(
-        spicedb_endpoint="localhost:50051",
-        spicedb_token="somerandomkeyhere",
+        spicedb_endpoint=spicedb_endpoint,
+        spicedb_token=spicedb_token,
         resource_type="article",
         subject_type="user",
         permission="view",
         resource_id_key="article_id",
-        subject_id="tim",  # Change this to test different users
+        subject_id=subject_id,
     )
 
     # Create prompt
@@ -109,12 +114,15 @@ async def main():
 if __name__ == "__main__":
     print()
     print("Prerequisites:")
-    print("1. SpiceDB must be running on localhost:50051")
-    print("2. OPENAI_API_KEY must be set in .env file")
-    print("3. Schema and permissions must be configured")
+    print("1. SpiceDB must be running on localhost:50051 (or set SPICEDB_ENDPOINT)")
+    print("2. Set SPICEDB_TOKEN environment variable")
+    print("3. Set OPENAI_API_KEY environment variable")
+    print("4. Schema and permissions must be configured in SpiceDB")
     print()
-    print("Note: This example uses 'alice' as the subject_id.")
-    print("      Modify the auth_filter initialization to test other users.")
+    print("Optional Configuration (via environment variables or .env file):")
+    print("  SPICEDB_ENDPOINT=localhost:50051 (default)")
+    print("  SPICEDB_TOKEN=somerandomkeyhere (required)")
+    print("  SUBJECT_ID=alice (default - change to test different users)")
     print()
     print("=" * 80)
     print()

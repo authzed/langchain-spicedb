@@ -23,6 +23,74 @@ Most RAG pipelines retrieve documents without considering user permissions. This
 3. **Framework integration**: Native LangChain and LangGraph components for seamless integration
 4. **Vector store agnostic**: Not tied to any specific vector database
 
+## Which Component Should I Use?
+
+Choose the right component based on your use case:
+
+| Component | Use Case | Best For |
+|-----------|----------|----------|
+| **SpiceDBRetriever** | Simple RAG pipelines | Drop-in replacement for any retriever. Wraps your existing retriever with authorization. |
+| **SpiceDBAuthFilter** | LangChain chains with middleware | Filtering documents in the middle of a chain. Reusable across different users via `config`. |
+| **create_auth_node** | LangGraph workflows | Complex multi-step workflows with state management. Provides authorization metrics in state. |
+| **SpiceDBPermissionTool** | Agentic workflows | Give agents the ability to check permissions before taking actions. |
+| **SpiceDBBulkPermissionTool** | Agentic workflows (batch) | Same as above but for checking multiple resources at once. |
+
+### Quick Decision Guide
+
+**Use SpiceDBRetriever if:**
+- You have a simple RAG pipeline
+- You always use the same user per retriever instance and you don't need to reuse the retriever across different users
+
+**Use SpiceDBAuthFilter if:**
+- You're building LangChain LCEL chains
+- You want to reuse the same chain for multiple users
+- You need to pass user context at runtime via `config`
+
+**Use create_auth_node if:**
+- You're using LangGraph for complex workflows
+- You need state management and observability
+- You're building multi-step agentic workflows
+
+**Use SpiceDBPermissionTool / SpiceDBBulkPermissionTool if:**
+- You're building agents with LangChain
+- Your agent needs to check permissions as part of its decision-making and you want agents to explain why actions are allowed or denied
+- You're implementing permission-aware automation
+
+### Example: Same Pipeline, Different Patterns
+
+**Pattern 1: SpiceDBRetriever (simplest)**
+```python
+retriever = SpiceDBRetriever(
+    base_retriever=vectorstore.as_retriever(),
+    subject_id="alice",  # Fixed user
+    ...
+)
+chain = retriever | prompt | llm
+```
+
+**Pattern 2: SpiceDBAuthFilter (reusable)**
+```python
+auth = SpiceDBAuthFilter(...)
+chain = retriever | auth | prompt | llm
+
+# Same chain, different users
+await chain.ainvoke("question", config={"configurable": {"subject_id": "alice"}})
+await chain.ainvoke("question", config={"configurable": {"subject_id": "bob"}})
+```
+
+**Pattern 3: LangGraph Node (stateful)**
+```python
+graph.add_node("authorize", create_auth_node(...))
+# Authorization metrics available in state['auth_results']
+```
+
+**Pattern 4: Agent Tool (agentic)**
+```python
+tools = [SpiceDBPermissionTool(...)]
+agent = create_tool_calling_agent(llm, tools, prompt)
+# Agent can check "Can user alice delete document 123?" and explain the result
+```
+
 ## Installation
 
 ```bash
@@ -219,30 +287,11 @@ result = tool.invoke({
 # Returns: "alice can access: doc1, doc2" or "alice cannot access any..."
 ```
 
-## Use Cases
-
-1. **Multi-Tenant SaaS**: Different customers see different documents
-2. **Enterprise RAG**: Role-based access control for internal knowledge bases
-3. **Healthcare/Legal**: Compliance-required document access controls
-4. **Collaborative Platforms**: Team-based permissions for shared documents
-5. **Document Management**: Fine-grained access control for sensitive information
-
-## Vector Store Compatibility
-
-Works with any vector store that returns documents with metadata:
-
-✅ Pinecone • ✅ FAISS • ✅ Weaviate • ✅ Chroma • ✅ Qdrant • ✅ Milvus • ✅ Any custom vector store
-
 ## Performance
 
 - **Native Bulk API**: Uses SpiceDB's `CheckBulkPermissionsRequest` for optimal performance
 - **Single API Call**: All permission checks happen in one request, not N individual calls
 - **Async Operations**: All operations are async for better performance
-
-**Performance Impact:**
-- Before: 100 documents = 100 API calls
-- After: 100 documents = 1 API call
-- Result: Lower latency, reduced network overhead, better throughput
 
 ## Testing
 

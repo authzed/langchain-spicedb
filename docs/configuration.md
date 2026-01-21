@@ -9,6 +9,7 @@ Complete reference for configuring langchain-spicedb components.
 - [Document Metadata Requirements](#document-metadata-requirements)
 - [Authorization Results](#authorization-results)
 - [Error Handling](#error-handling)
+- [Troubleshooting](#troubleshooting)
 
 ## Basic Configuration
 
@@ -137,6 +138,42 @@ authorizer = SpiceDBAuthorizer(
     resource_id_key="doc_id",      # Metadata key
 )
 ```
+
+### Bulk Permission Checks
+
+langchain-spicedb uses SpiceDB's native `CheckBulkPermissionsRequest` API for optimal performance. All permission checks for retrieved documents are batched into a single API call:
+
+```python
+retriever = SpiceDBRetriever(
+    base_retriever=vector_store.as_retriever(),
+    spicedb_endpoint="localhost:50051",
+    spicedb_token="sometoken",
+    subject_id="alice",
+    resource_type="article",
+    resource_id_key="article_id",
+    permission="view",
+    # Bulk checks happen automatically - no configuration needed
+)
+
+# When this returns 10 documents:
+docs = await retriever.ainvoke("query")
+# Only 1 API call is made to SpiceDB to check all 10 documents
+```
+
+**Performance Characteristics:**
+- **Single API call** regardless of document count
+- **Constant network latency** (no N+1 query problem)
+- **Efficient** for both 10 and 10,000 documents
+- **No manual batching required** - handled automatically
+
+**Comparison:**
+
+| Approach | API Calls | Network Latency | Efficiency |
+|----------|-----------|-----------------|------------|
+| Individual checks | N calls | N × latency | Poor |
+| **Bulk API (used by langchain-spicedb)** | **1 call** | **1 × latency** | **Excellent** |
+
+This is why langchain-spicedb performs well even with large document sets.
 
 ### Environment Variables
 
@@ -426,6 +463,239 @@ logger.setLevel(logging.DEBUG)
 # Now you'll see detailed logs
 result = await auth_filter.ainvoke(docs, subject_id="alice")
 ```
+
+## Troubleshooting
+
+### Common Issues and Solutions
+
+#### SpiceDB Connection Errors
+
+**Symptoms:** `failed to connect to SpiceDB` or connection timeout errors
+
+**Diagnostic Steps:**
+
+1. Verify SpiceDB is running:
+   ```bash
+   docker ps | grep spicedb
+   ```
+
+2. Check environment variables are set:
+   ```bash
+   echo $SPICEDB_ENDPOINT
+   echo $SPICEDB_TOKEN
+   ```
+
+3. Test connectivity with zed CLI:
+   ```bash
+   zed permission check article:123 view user:tim
+   ```
+
+**Solutions:**
+- Ensure Docker container is running
+- Verify endpoint matches SpiceDB port (default: 50051)
+- Check firewall rules aren't blocking gRPC traffic
+- For TLS connections, verify certificates are valid
+
+---
+
+#### No Documents Returned
+
+**Symptoms:** `Documents after authorization: 0` or empty results
+
+**Root Causes:**
+1. No relationships exist for the user
+2. Subject ID mismatch between config and relationships
+3. Incorrect permission name in query
+
+**Diagnostic Steps:**
+
+1. Verify relationships exist:
+   ```bash
+   zed relationship read article:123
+   ```
+
+2. Check subject ID matches:
+   ```bash
+   echo $SUBJECT_ID
+   # Should match the user in relationships
+   ```
+
+3. Test permission directly:
+   ```bash
+   zed permission check article:123 view user:tim
+   ```
+
+**Solutions:**
+- Create relationships: `zed relationship create article:123 viewer user:tim`
+- Verify `subject_id` parameter matches your user ID exactly
+- Check permission name matches schema (e.g., "view" not "read")
+
+---
+
+#### Schema/Relation Errors
+
+**Symptoms:** `relation not found`, `permission not found`, or `object definition not found`
+
+**Diagnostic Steps:**
+
+1. Verify schema is applied:
+   ```bash
+   zed schema read
+   ```
+
+2. Check resource type exists in schema
+3. Verify permission is defined for the resource type
+4. Ensure relation names are correct
+
+**Solutions:**
+- Apply schema: `zed schema write schema.zed`
+- Match `resource_type` to schema definitions exactly (case-sensitive)
+- Use relation names (e.g., "viewer"), not permission names (e.g., "view")
+- Check for typos in type/permission names
+
+---
+
+#### Invalid Resource ID Error
+
+**Symptoms:** `invalid ObjectReference.ObjectId: value does not match regex pattern`
+
+**Cause:** SpiceDB has strict requirements for resource IDs
+
+**Valid ID Patterns:**
+- Alphanumeric characters: `a-z`, `A-Z`, `0-9`
+- Hyphens: `-`
+- Underscores: `_`
+- Forward slashes: `/` (for hierarchical IDs)
+
+**Examples:**
+- ✓ Valid: `"123"`, `"article-456"`, `"doc_id_789"`, `"tenant/doc/123"`
+- ✗ Invalid: `"article 123"` (space), `"doc@456"` (special char), `"id#789"` (hash)
+
+**Solutions:**
+
+1. Sanitize resource IDs before creating relationships:
+   ```python
+   import re
+
+   def sanitize_resource_id(raw_id: str) -> str:
+       # Replace spaces and invalid chars with underscores
+       return re.sub(r'[^a-zA-Z0-9_/-]', '_', raw_id)
+   ```
+
+2. Update metadata to use valid IDs
+3. Recreate relationships with corrected IDs
+
+---
+
+#### AsyncIO Runtime Error
+
+**Symptoms:** `asyncio.run() cannot be called from a running event loop`
+
+**Cause:** Mixing synchronous and asynchronous code incorrectly
+
+**Wrong (causes error):**
+```python
+async def my_function():
+    # Using sync invoke() in async context
+    result = tool.invoke({...})  # ✗ Error!
+```
+
+**Correct:**
+```python
+async def my_function():
+    # Use async ainvoke() in async context
+    result = await tool.ainvoke({...})  # ✓ Works!
+```
+
+**Solutions:**
+- In async functions, always use `await` with `ainvoke()`
+- In sync code, use `invoke()` without `await`
+- Don't call `asyncio.run()` inside an already-running event loop
+
+---
+
+#### Port Already in Use
+
+**Symptoms:** `bind: address already in use` when starting SpiceDB
+
+**Cause:** Another SpiceDB container or process is using port 50051
+
+**Solutions:**
+
+1. **Option A: Stop existing container**
+   ```bash
+   # Find and stop SpiceDB container
+   docker stop $(docker ps -q --filter ancestor=authzed/spicedb)
+
+   # Or stop all SpiceDB containers
+   docker ps -a | grep spicedb
+   docker stop <container-id>
+   ```
+
+2. **Option B: Use a different port**
+   ```bash
+   # Start on port 50052
+   docker run --rm -p 50052:50051 \
+     authzed/spicedb serve \
+     --grpc-preshared-key "somerandomkeyhere" \
+     --grpc-no-tls
+
+   # Update endpoint
+   export SPICEDB_ENDPOINT=localhost:50052
+   ```
+
+3. **Option C: Kill process using the port**
+   ```bash
+   # Find process on port 50051
+   lsof -i :50051
+
+   # Kill the process
+   kill -9 <PID>
+   ```
+
+---
+
+#### Missing Metadata Errors
+
+**Symptoms:** Documents silently denied or "MISSING_METADATA" in denied list
+
+**Cause:** Documents lack the required metadata key specified by `resource_id_key`
+
+**Diagnostic:**
+```python
+# Check if documents have required metadata
+for doc in docs:
+    if "article_id" not in doc.metadata:
+        print(f"Missing metadata: {doc.page_content[:50]}")
+```
+
+**Solutions:**
+
+1. Add metadata when creating documents:
+   ```python
+   doc = Document(
+       page_content="...",
+       metadata={"article_id": "123"}  # Required!
+   )
+   ```
+
+2. Update `resource_id_key` to match your metadata structure
+3. Use a data pipeline to ensure all documents have IDs
+
+---
+
+### Quick Troubleshooting Checklist
+
+Use this checklist for systematic debugging:
+
+- [ ] SpiceDB is running (`docker ps | grep spicedb`)
+- [ ] Environment variables are set (`echo $SPICEDB_ENDPOINT`)
+- [ ] Schema is applied (`zed schema read`)
+- [ ] Relationships exist (`zed relationship read <resource>`)
+- [ ] Permission check succeeds (`zed permission check <resource> <permission> <subject>`)
+- [ ] Resource IDs are valid (alphanumeric, hyphens, underscores only)
+- [ ] Documents have required metadata key
+- [ ] Using correct async/sync methods
 
 ## Configuration Best Practices
 

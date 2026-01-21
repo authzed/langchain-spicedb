@@ -267,7 +267,7 @@ result = tool.invoke({
 
 ### SpiceDBBulkPermissionTool
 
-Check permissions for multiple resources at once:
+Same as `SpiceDBPermissionTool` but check permissions for multiple resources at once:
 
 ```python
 from langchain_spicedb import SpiceDBBulkPermissionTool

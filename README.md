@@ -1,21 +1,5 @@
 # LangChain-SpiceDB Integration
 
-> **📢 IMPORTANT: This repository has moved!**
->
-> The official repository for `langchain-spicedb` is now maintained at:
->
-> **🔗 https://github.com/authzed/langchain-spicedb**
->
-> Please update your bookmarks and use the official repository for:
-> - ⭐ Starring the project
-> - 🐛 Filing issues
-> - 🔀 Submitting pull requests
-> - 📖 Accessing the latest documentation
->
-> This repository is kept for historical reference only.
-
----
-
 Authorization library for RAG (Retrieval-Augmented Generation) pipelines using SpiceDB. Designed for LangChain and LangGraph integrations with support for any vector store (Pinecone, FAISS, Weaviate, Chroma, etc.).
 
 This package follows [LangChain's official integration guidelines](https://python.langchain.com/docs/contributing/) and provides standard LangChain components (BaseRetriever, BaseTool) plus additional middleware patterns.

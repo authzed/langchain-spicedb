@@ -87,7 +87,7 @@ graph.add_node("authorize", create_auth_node(...))
 **Pattern 4: Agent Tool (agentic)**
 ```python
 tools = [SpiceDBPermissionTool(...)]
-agent = create_tool_calling_agent(llm, tools, prompt)
+agent = create_agent(llm, tools, system_prompt="You are a helpful assistant.")
 # Agent can check "Can user alice delete document 123?" and explain the result
 ```
 

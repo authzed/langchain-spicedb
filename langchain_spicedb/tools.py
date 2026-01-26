@@ -97,7 +97,7 @@ class SpiceDBPermissionTool(SpiceDBAuthTool):
     to access a resource before retrieving or operating on it.
 
     Example:
-        >>> from langchain.agents import create_react_agent
+        >>> from langchain.agents import create_agent
         >>> from spicedb_rag_auth import SpiceDBPermissionTool
         >>>
         >>> # Create tool
@@ -109,11 +109,15 @@ class SpiceDBPermissionTool(SpiceDBAuthTool):
         >>>
         >>> # Use in agent
         >>> tools = [permission_tool, other_tools...]
-        >>> agent = create_react_agent(llm, tools, prompt)
+        >>> agent = create_agent(
+        ...     llm,
+        ...     tools,
+        ...     system_prompt="You are a helpful assistant."
+        ... )
         >>>
         >>> # Agent can now check permissions before actions
         >>> result = agent.invoke({
-        ...     "input": "Can user alice view document doc1?"
+        ...     "messages": [{"role": "user", "content": "Can user alice view document doc1?"}]
         ... })
     """
 

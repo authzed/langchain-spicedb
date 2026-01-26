@@ -13,9 +13,8 @@ The tool allows agents to:
 import asyncio
 import os
 from dotenv import load_dotenv
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
-from langchain.agents import AgentExecutor, create_tool_calling_agent
+from langchain.agents import create_agent
 
 from langchain_spicedb import SpiceDBPermissionTool, SpiceDBBulkPermissionTool
 
@@ -58,12 +57,12 @@ async def main():
     # Initialize LLM
     llm = ChatOpenAI(api_key=os.getenv("OPENAI_API_KEY"), model="gpt-4o-mini", temperature=0)
 
-    # Create agent prompt
-    prompt = ChatPromptTemplate.from_messages(
-        [
-            (
-                "system",
-                """You are a helpful assistant that helps users understand their permissions.
+    # Create agent with SpiceDB tools
+    tools = [permission_tool, bulk_permission_tool]
+    agent = create_agent(
+        llm,
+        tools,
+        system_prompt="""You are a helpful assistant that helps users understand their permissions.
 
 You have access to tools that check permissions in our authorization system (SpiceDB).
 
@@ -79,24 +78,18 @@ When a user asks about accessing resources:
 Available resource types: article
 Available permissions: view, edit, delete
 """,
-            ),
-            ("human", "{input}"),
-            MessagesPlaceholder(variable_name="agent_scratchpad"),
-        ]
+        debug=True,
     )
-
-    # Create agent with SpiceDB tools
-    tools = [permission_tool, bulk_permission_tool]
-    agent = create_tool_calling_agent(llm, tools, prompt)
-    agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
     print("-" * 80)
     print("Example 1: Checking Single Resource Permission")
     print("-" * 80)
     print()
 
-    result = await agent_executor.ainvoke({"input": "Can user tim view article 123?"})
-    print(f"\nAgent Response:\n{result['output']}")
+    result = await agent.ainvoke(
+        {"messages": [{"role": "user", "content": "Can user tim view article 123?"}]}
+    )
+    print(f"\nAgent Response:\n{result['messages'][-1].content}")
     print()
     print("=" * 80)
     print()
@@ -106,10 +99,10 @@ Available permissions: view, edit, delete
     print("-" * 80)
     print()
 
-    result = await agent_executor.ainvoke(
-        {"input": "Which of these articles can user tim view: 123, 456, 789?"}
+    result = await agent.ainvoke(
+        {"messages": [{"role": "user", "content": "Which of these articles can user tim view: 123, 456, 789?"}]}
     )
-    print(f"\nAgent Response:\n{result['output']}")
+    print(f"\nAgent Response:\n{result['messages'][-1].content}")
     print()
     print("=" * 80)
     print()
@@ -119,8 +112,10 @@ Available permissions: view, edit, delete
     print("-" * 80)
     print()
 
-    result = await agent_executor.ainvoke({"input": "Can user alice edit article 123?"})
-    print(f"\nAgent Response:\n{result['output']}")
+    result = await agent.ainvoke(
+        {"messages": [{"role": "user", "content": "Can user alice edit article 123?"}]}
+    )
+    print(f"\nAgent Response:\n{result['messages'][-1].content}")
     print()
     print("=" * 80)
     print()
@@ -130,12 +125,17 @@ Available permissions: view, edit, delete
     print("-" * 80)
     print()
 
-    result = await agent_executor.ainvoke(
+    result = await agent.ainvoke(
         {
-            "input": "User bob wants to delete article 456. Check if they have permission and let me know what to tell them."
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "User bob wants to delete article 456. Check if they have permission and let me know what to tell them.",
+                }
+            ]
         }
     )
-    print(f"\nAgent Response:\n{result['output']}")
+    print(f"\nAgent Response:\n{result['messages'][-1].content}")
     print()
     print("=" * 80)
     print()

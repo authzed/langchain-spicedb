@@ -100,7 +100,14 @@ Available permissions: view, edit, delete
     print()
 
     result = await agent.ainvoke(
-        {"messages": [{"role": "user", "content": "Which of these articles can user tim view: 123, 456, 789?"}]}
+        {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "Which of these articles can user tim view: 123, 456, 789?",
+                }
+            ]
+        }
     )
     print(f"\nAgent Response:\n{result['messages'][-1].content}")
     print()

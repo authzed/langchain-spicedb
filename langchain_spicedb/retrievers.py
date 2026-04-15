@@ -72,9 +72,6 @@ class SpiceDBRetriever(BaseRetriever):
     resource_id_key: str = "resource_id"
     """Key in document metadata containing resource ID."""
 
-    fail_open: bool = False
-    """If True, allow access on errors; if False, deny on errors."""
-
     use_tls: bool = False
     """Whether to use TLS for SpiceDB connection."""
 
@@ -91,7 +88,6 @@ class SpiceDBRetriever(BaseRetriever):
         subject_type: str = "user",
         permission: str = "view",
         resource_id_key: str = "resource_id",
-        fail_open: bool = False,
         use_tls: bool = False,
         **kwargs: Any,
     ):
@@ -107,7 +103,6 @@ class SpiceDBRetriever(BaseRetriever):
             subject_type: SpiceDB subject type
             permission: Permission to check
             resource_id_key: Key in document metadata containing resource ID
-            fail_open: If True, allow access on errors
             use_tls: Whether to use TLS for SpiceDB connection
             **kwargs: Additional arguments passed to BaseRetriever
         """
@@ -121,7 +116,6 @@ class SpiceDBRetriever(BaseRetriever):
             subject_type=subject_type,
             permission=permission,
             resource_id_key=resource_id_key,
-            fail_open=fail_open,
             use_tls=use_tls,
             **kwargs,
         )
@@ -134,7 +128,6 @@ class SpiceDBRetriever(BaseRetriever):
             subject_type=self.subject_type,
             permission=self.permission,
             resource_id_key=self.resource_id_key,
-            fail_open=self.fail_open,
             use_tls=self.use_tls,
         )
 

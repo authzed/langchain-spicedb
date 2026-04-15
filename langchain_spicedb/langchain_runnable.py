@@ -47,7 +47,6 @@ class SpiceDBAuthFilter(Runnable):
         subject_type: str = "user",
         permission: str = "view",
         resource_id_key: str = "resource_id",
-        fail_open: bool = False,
         use_tls: bool = False,
         subject_id: Optional[str] = None,
         return_metrics: bool = False,
@@ -62,7 +61,6 @@ class SpiceDBAuthFilter(Runnable):
             subject_type: SpiceDB subject type (e.g., "user")
             permission: Permission to check (e.g., "view", "edit")
             resource_id_key: Key in document metadata containing resource ID
-            fail_open: If True, allow access on errors
             use_tls: Whether to use TLS for SpiceDB connection
             subject_id: Default subject ID (can be overridden in config)
             return_metrics: If True, return AuthorizationResult instead of just docs
@@ -75,7 +73,6 @@ class SpiceDBAuthFilter(Runnable):
             subject_type=subject_type,
             permission=permission,
             resource_id_key=resource_id_key,
-            fail_open=fail_open,
             use_tls=use_tls,
         )
         self.default_subject_id = subject_id
@@ -163,7 +160,6 @@ class SpiceDBAuthFilter(Runnable):
             subject_type=self.authorizer.subject_type,
             permission=self.authorizer.permission,
             resource_id_key=self.authorizer.resource_id_key,
-            fail_open=self.authorizer.fail_open,
             use_tls=self.authorizer.use_tls,
             subject_id=subject_id or self.default_subject_id,
             return_metrics=self.return_metrics,
@@ -205,7 +201,6 @@ class SpiceDBAuthLambda:
         permission: str = "view",
         resource_id_key: str = "resource_id",
         subject_id: str = None,
-        fail_open: bool = False,
     ):
         """Initialize the authorization lambda."""
         self.authorizer = SpiceDBAuthorizer(
@@ -215,7 +210,6 @@ class SpiceDBAuthLambda:
             subject_type=subject_type,
             permission=permission,
             resource_id_key=resource_id_key,
-            fail_open=fail_open,
         )
         self.subject_id = subject_id
 

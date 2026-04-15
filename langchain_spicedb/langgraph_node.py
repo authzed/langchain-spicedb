@@ -52,7 +52,6 @@ def create_auth_node(
     subject_type: str = "user",
     permission: str = "view",
     resource_id_key: str = "resource_id",
-    fail_open: bool = False,
     use_tls: bool = False,
 ):
     """
@@ -68,7 +67,6 @@ def create_auth_node(
         subject_type: SpiceDB subject type
         permission: Permission to check
         resource_id_key: Key in document metadata containing resource ID
-        fail_open: If True, allow access on errors
         use_tls: Whether to use TLS for SpiceDB connection
 
     Returns:
@@ -94,7 +92,6 @@ def create_auth_node(
         subject_type=subject_type,
         permission=permission,
         resource_id_key=resource_id_key,
-        fail_open=fail_open,
         use_tls=use_tls,
     )
 
@@ -174,7 +171,6 @@ class AuthorizationNode:
         subject_type: str = "user",
         permission: str = "view",
         resource_id_key: str = "resource_id",
-        fail_open: bool = False,
         use_tls: bool = False,
         state_keys: Optional[Dict[str, str]] = None,
     ):
@@ -188,7 +184,6 @@ class AuthorizationNode:
             subject_type: SpiceDB subject type
             permission: Permission to check
             resource_id_key: Key in document metadata containing resource ID
-            fail_open: If True, allow access on errors
             use_tls: Whether to use TLS for SpiceDB connection
             state_keys: Custom state key mappings (e.g., {"documents": "docs"})
         """
@@ -199,7 +194,6 @@ class AuthorizationNode:
             subject_type=subject_type,
             permission=permission,
             resource_id_key=resource_id_key,
-            fail_open=fail_open,
             use_tls=use_tls,
         )
 

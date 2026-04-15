@@ -219,23 +219,3 @@ class TestSpiceDBRetrieverIntegration:
             docs = retriever.invoke("test query")
             assert isinstance(docs, list)
 
-    @pytest.mark.skipif(
-        not os.getenv("SPICEDB_ENDPOINT"),
-        reason="SPICEDB_ENDPOINT not set - skipping integration test",
-    )
-    def test_retriever_fail_open_behavior(self, base_retriever, spicedb_config):
-        """Test retriever with fail_open=True."""
-        retriever = SpiceDBRetriever(
-            base_retriever=base_retriever,
-            subject_id="tim",
-            subject_type="user",
-            resource_type="article",
-            resource_id_key="article_id",
-            permission="view",
-            fail_open=True,  # Allow documents on SpiceDB errors
-            **spicedb_config,
-        )
-
-        # Should not raise errors even if SpiceDB has issues
-        docs = retriever.invoke("test query")
-        assert isinstance(docs, list)

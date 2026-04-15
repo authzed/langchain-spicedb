@@ -9,7 +9,7 @@ from unittest.mock import Mock, AsyncMock, patch
 from langchain_core.documents import Document
 from langchain_core.retrievers import BaseRetriever
 
-from langchain_spicedb import SpiceDBRetriever
+from langchain_spicedb import SpiceDBRetriever, SpiceDBPreFilterRetriever
 from langchain_spicedb.core import SpiceDBAuthorizer
 
 
@@ -378,3 +378,138 @@ class TestSpiceDBAuthorizerLookupResources:
 
             with pytest.raises(Exception, match="SpiceDB timeout"):
                 await authorizer.lookup_resources(subject_id="tim")
+
+
+class TestSpiceDBPreFilterRetrieverUnit:
+    """Unit tests for SpiceDBPreFilterRetriever."""
+
+    @pytest.fixture
+    def mock_vector_store(self):
+        """Mock vector store that returns one document."""
+        mock = AsyncMock()
+        mock.asimilarity_search = AsyncMock(return_value=[
+            Document(page_content="Doc 1", metadata={"article_id": "123"}),
+        ])
+        return mock
+
+    @pytest.fixture
+    def mock_authorizer(self):
+        """Mock authorizer returning two authorized IDs."""
+        with patch("langchain_spicedb.retrievers.SpiceDBAuthorizer") as mock:
+            mock_instance = AsyncMock()
+            mock_instance.lookup_resources = AsyncMock(return_value=["123", "456"])
+            mock.return_value = mock_instance
+            yield mock
+
+    def test_pre_filter_retriever_initialization(self, mock_vector_store, mock_authorizer):
+        """SpiceDBPreFilterRetriever stores all config correctly."""
+        retriever = SpiceDBPreFilterRetriever(
+            vector_store=mock_vector_store,
+            filter_factory=lambda ids: {"filter": {"article_id": {"$in": ids}}},
+            subject_id="tim",
+            resource_type="article",
+            permission="view",
+            spicedb_endpoint="localhost:50051",
+            spicedb_token="test_token",
+        )
+        assert retriever.subject_id == "tim"
+        assert retriever.resource_type == "article"
+        assert retriever.permission == "view"
+        assert retriever.k == 4
+
+    def test_pre_filter_retriever_is_base_retriever(self):
+        """SpiceDBPreFilterRetriever is a LangChain BaseRetriever."""
+        from langchain_core.retrievers import BaseRetriever
+        assert issubclass(SpiceDBPreFilterRetriever, BaseRetriever)
+
+    @pytest.mark.asyncio
+    async def test_lookup_called_then_vector_store_searched(self, mock_vector_store, mock_authorizer):
+        """Retriever calls lookup_resources first, then similarity_search with filter."""
+        filter_factory = lambda ids: {"filter": {"article_id": {"$in": ids}}}
+        retriever = SpiceDBPreFilterRetriever(
+            vector_store=mock_vector_store,
+            filter_factory=filter_factory,
+            subject_id="tim",
+            resource_type="article",
+            permission="view",
+            spicedb_endpoint="localhost:50051",
+            spicedb_token="test_token",
+        )
+
+        docs = await retriever.ainvoke("test query")
+
+        mock_authorizer.return_value.lookup_resources.assert_called_once_with(subject_id="tim")
+        mock_vector_store.asimilarity_search.assert_called_once_with(
+            "test query",
+            k=4,
+            filter={"article_id": {"$in": ["123", "456"]}},
+        )
+        assert len(docs) == 1
+        assert docs[0].metadata["article_id"] == "123"
+
+    @pytest.mark.asyncio
+    async def test_empty_authorized_ids_skips_vector_store(self, mock_vector_store, mock_authorizer):
+        """When no resources are authorized, returns [] without querying the vector store."""
+        mock_authorizer.return_value.lookup_resources = AsyncMock(return_value=[])
+        retriever = SpiceDBPreFilterRetriever(
+            vector_store=mock_vector_store,
+            filter_factory=lambda ids: {"filter": {"article_id": {"$in": ids}}},
+            subject_id="tim",
+            resource_type="article",
+            permission="view",
+            spicedb_endpoint="localhost:50051",
+            spicedb_token="test_token",
+        )
+
+        docs = await retriever.ainvoke("test query")
+
+        assert docs == []
+        mock_vector_store.asimilarity_search.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_spicedb_error_propagates(self, mock_vector_store, mock_authorizer):
+        """SpiceDB errors are raised to the caller, never swallowed."""
+        mock_authorizer.return_value.lookup_resources = AsyncMock(
+            side_effect=Exception("SpiceDB unavailable")
+        )
+        retriever = SpiceDBPreFilterRetriever(
+            vector_store=mock_vector_store,
+            filter_factory=lambda ids: {"filter": {"article_id": {"$in": ids}}},
+            subject_id="tim",
+            resource_type="article",
+            permission="view",
+            spicedb_endpoint="localhost:50051",
+            spicedb_token="test_token",
+        )
+
+        with pytest.raises(Exception, match="SpiceDB unavailable"):
+            await retriever.ainvoke("test query")
+
+    def test_custom_k_passed_to_similarity_search(self, mock_vector_store, mock_authorizer):
+        """k parameter controls how many docs the vector store returns."""
+        retriever = SpiceDBPreFilterRetriever(
+            vector_store=mock_vector_store,
+            filter_factory=lambda ids: {"filter": {"article_id": {"$in": ids}}},
+            subject_id="tim",
+            resource_type="article",
+            permission="view",
+            spicedb_endpoint="localhost:50051",
+            spicedb_token="test_token",
+            k=10,
+        )
+        assert retriever.k == 10
+
+    def test_with_config_returns_new_instance_with_updated_subject(self, mock_vector_store, mock_authorizer):
+        """with_config creates a new retriever with updated subject_id."""
+        retriever = SpiceDBPreFilterRetriever(
+            vector_store=mock_vector_store,
+            filter_factory=lambda ids: {"filter": {"article_id": {"$in": ids}}},
+            subject_id="tim",
+            resource_type="article",
+            permission="view",
+            spicedb_endpoint="localhost:50051",
+            spicedb_token="test_token",
+        )
+        new_retriever = retriever.with_config(subject_id="alice")
+        assert new_retriever.subject_id == "alice"
+        assert retriever.subject_id == "tim"  # original unchanged

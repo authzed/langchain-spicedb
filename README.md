@@ -27,15 +27,20 @@ Most RAG pipelines retrieve documents without considering user permissions. This
 
 Choose the right component based on your use case:
 
-| Component | Use Case | Best For |
-|-----------|----------|----------|
-| **SpiceDBRetriever** | Simple RAG pipelines | Drop-in replacement for any retriever. Wraps your existing retriever with authorization. |
-| **SpiceDBAuthFilter** | LangChain chains with middleware | Filtering documents in the middle of a chain. Reusable across different users via `config`. |
-| **create_auth_node** | LangGraph workflows | Complex multi-step workflows with state management. Provides authorization metrics in state. |
-| **SpiceDBPermissionTool** | Agentic workflows | Give agents the ability to check permissions before taking actions. |
-| **SpiceDBBulkPermissionTool** | Agentic workflows (batch) | Same as above but for checking multiple resources at once. |
+| Component | Pattern | Use Case |
+|-----------|---------|----------|
+| **SpiceDBRetriever** | Post-filter | Simple RAG pipelines. Drop-in replacement for any retriever. Retrieves semantically then filters by permission. Best when users have broad access. |
+| **SpiceDBPreFilterRetriever** | Pre-filter | Use when users can only access a small fraction of a large corpus. Fetches authorized IDs from SpiceDB first, then runs a filtered vector search. Requires a `filter_factory` matching your vector store's filter syntax. |
+| **SpiceDBAuthFilter** | Post-filter | LangChain chains with middleware. Filtering documents in the middle of a chain. Reusable across different users via `config`. |
+| **create_auth_node** | Post-filter | LangGraph workflows. Complex multi-step workflows with state management. Provides authorization metrics in state. |
+| **SpiceDBPermissionTool** | Check | Agentic workflows. Give agents the ability to check a single permission before taking actions. |
+| **SpiceDBBulkPermissionTool** | Check | Agentic workflows (batch). Same as above but for checking multiple resources at once. |
 
 ### Quick Decision Guide
+
+**Pre-filter vs Post-filter:**
+- Use **post-filter** (`SpiceDBRetriever`, `SpiceDBAuthFilter`) when users have access to most documents. Semantic search quality is highest because all documents are candidates.
+- Use **pre-filter** (`SpiceDBPreFilterRetriever`) when users have access to a small subset of a large corpus. Avoids retrieving unauthorized content entirely. Requires knowing your vector store's filter syntax.
 
 **Use SpiceDBRetriever if:**
 - You have a simple RAG pipeline
@@ -89,6 +94,20 @@ graph.add_node("authorize", create_auth_node(...))
 tools = [SpiceDBPermissionTool(...)]
 agent = create_agent(llm, tools, system_prompt="You are a helpful assistant.")
 # Agent can check "Can user alice delete document 123?" and explain the result
+```
+
+**Pattern 5: SpiceDBPreFilterRetriever (pre-filter)**
+```python
+retriever = SpiceDBPreFilterRetriever(
+    vector_store=vector_store,
+    filter_factory=lambda ids: {"filter": {"article_id": {"$in": ids}}},
+    subject_id="tim",
+    resource_type="article",
+    permission="view",
+    spicedb_endpoint="localhost:50051",
+    spicedb_token="sometoken",
+)
+chain = retriever | prompt | llm
 ```
 
 ## Installation

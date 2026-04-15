@@ -15,6 +15,7 @@ from authzed.api.v1 import (
     CheckPermissionResponse,
     CheckBulkPermissionsRequest,
     CheckBulkPermissionsRequestItem,
+    LookupResourcesRequest,
     ObjectReference,
     SubjectReference,
 )
@@ -233,6 +234,55 @@ class SpiceDBAuthorizer:
         )
 
         return response.permissionship == CheckPermissionResponse.PERMISSIONSHIP_HAS_PERMISSION
+
+    async def lookup_resources(
+        self,
+        subject_id: str,
+        subject_type: Optional[str] = None,
+        resource_type: Optional[str] = None,
+        permission: Optional[str] = None,
+    ) -> List[str]:
+        """
+        Look up all resources a subject has permission to access.
+
+        Uses SpiceDB's LookupResources streaming API to return all resource
+        IDs the subject is authorized to access. Results can be used to
+        pre-filter a vector store search.
+
+        Args:
+            subject_id: ID of the subject (user)
+            subject_type: Override default subject type
+            resource_type: Override default resource type
+            permission: Override default permission
+
+        Returns:
+            List of authorized resource IDs. Empty list means no access.
+
+        Raises:
+            Exception: Propagates any SpiceDB communication errors to the caller.
+        """
+        subject_type = subject_type or self.subject_type
+        resource_type = resource_type or self.resource_type
+        permission = permission or self.permission
+
+        resp = self.client.LookupResources(
+            LookupResourcesRequest(
+                subject=SubjectReference(
+                    object=ObjectReference(
+                        object_type=subject_type,
+                        object_id=subject_id,
+                    )
+                ),
+                permission=permission,
+                resource_object_type=resource_type,
+            )
+        )
+
+        authorized_ids = []
+        async for response in resp:
+            authorized_ids.append(response.resource_object_id)
+
+        return authorized_ids
 
     async def _batch_check_permissions(
         self,

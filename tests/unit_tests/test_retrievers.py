@@ -10,6 +10,7 @@ from langchain_core.documents import Document
 from langchain_core.retrievers import BaseRetriever
 
 from langchain_spicedb import SpiceDBRetriever
+from langchain_spicedb.core import SpiceDBAuthorizer
 
 
 class MockRetriever(BaseRetriever):
@@ -291,3 +292,82 @@ class TestSpiceDBRetrieverErrorHandling:
 
             with pytest.raises(Exception, match="SpiceDB connection refused"):
                 await retriever.ainvoke("test query")
+
+
+class TestSpiceDBAuthorizerLookupResources:
+    """Unit tests for SpiceDBAuthorizer.lookup_resources."""
+
+    @pytest.mark.asyncio
+    async def test_lookup_resources_returns_authorized_ids(self):
+        """lookup_resources streams responses and returns resource IDs."""
+        with patch("langchain_spicedb.core.Client") as mock_client_class:
+            mock_client = Mock()
+            mock_client_class.return_value = mock_client
+
+            async def mock_stream():
+                responses = [
+                    Mock(resource_object_id="123"),
+                    Mock(resource_object_id="456"),
+                ]
+                for r in responses:
+                    yield r
+
+            mock_client.LookupResources = Mock(return_value=mock_stream())
+
+            authorizer = SpiceDBAuthorizer(
+                spicedb_endpoint="localhost:50051",
+                spicedb_token="test_token",
+                resource_type="article",
+                subject_type="user",
+                permission="view",
+            )
+
+            result = await authorizer.lookup_resources(subject_id="tim")
+
+            assert result == ["123", "456"]
+            mock_client.LookupResources.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_lookup_resources_returns_empty_when_no_access(self):
+        """lookup_resources returns [] when the user has no authorized resources."""
+        with patch("langchain_spicedb.core.Client") as mock_client_class:
+            mock_client = Mock()
+            mock_client_class.return_value = mock_client
+
+            async def mock_stream():
+                return
+                yield  # makes this an async generator; never reached
+
+            mock_client.LookupResources = Mock(return_value=mock_stream())
+
+            authorizer = SpiceDBAuthorizer(
+                spicedb_endpoint="localhost:50051",
+                spicedb_token="test_token",
+                resource_type="article",
+            )
+
+            result = await authorizer.lookup_resources(subject_id="tim")
+
+            assert result == []
+
+    @pytest.mark.asyncio
+    async def test_lookup_resources_propagates_error(self):
+        """lookup_resources raises when SpiceDB call fails."""
+        with patch("langchain_spicedb.core.Client") as mock_client_class:
+            mock_client = Mock()
+            mock_client_class.return_value = mock_client
+
+            async def mock_stream_error():
+                raise Exception("SpiceDB timeout")
+                yield  # makes this an async generator; never reached
+
+            mock_client.LookupResources = Mock(return_value=mock_stream_error())
+
+            authorizer = SpiceDBAuthorizer(
+                spicedb_endpoint="localhost:50051",
+                spicedb_token="test_token",
+                resource_type="article",
+            )
+
+            with pytest.raises(Exception, match="SpiceDB timeout"):
+                await authorizer.lookup_resources(subject_id="tim")

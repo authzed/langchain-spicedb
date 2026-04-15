@@ -167,7 +167,6 @@ class TestSpiceDBPermissionToolIntegration:
             assert result in ["true", "false"]
 
 
-
 class TestSpiceDBBulkPermissionToolIntegration:
     """Integration tests for SpiceDBBulkPermissionTool with real SpiceDB."""
 
@@ -332,4 +331,3 @@ class TestSpiceDBBulkPermissionToolIntegration:
 
             result = tool._run(subject_id="tim", resource_ids="123,456", permission="view")
             assert isinstance(result, str)
-

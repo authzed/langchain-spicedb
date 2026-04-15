@@ -385,6 +385,6 @@ class SpiceDBPreFilterRetriever(BaseRetriever):
         Returns:
             New SpiceDBPreFilterRetriever instance
         """
-        updates = {"subject_id": subject_id or self.subject_id}
+        updates = {"subject_id": subject_id if subject_id is not None else self.subject_id}
         updates.update(kwargs)
         return self.model_copy(update=updates)

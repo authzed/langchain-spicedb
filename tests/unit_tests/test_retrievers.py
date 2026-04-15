@@ -485,8 +485,9 @@ class TestSpiceDBPreFilterRetrieverUnit:
         with pytest.raises(Exception, match="SpiceDB unavailable"):
             await retriever.ainvoke("test query")
 
-    def test_custom_k_passed_to_similarity_search(self, mock_vector_store, mock_authorizer):
-        """k parameter controls how many docs the vector store returns."""
+    @pytest.mark.asyncio
+    async def test_custom_k_forwarded_to_similarity_search(self, mock_vector_store, mock_authorizer):
+        """k parameter is forwarded to asimilarity_search."""
         retriever = SpiceDBPreFilterRetriever(
             vector_store=mock_vector_store,
             filter_factory=lambda ids: {"filter": {"article_id": {"$in": ids}}},
@@ -498,6 +499,14 @@ class TestSpiceDBPreFilterRetrieverUnit:
             k=10,
         )
         assert retriever.k == 10
+
+        await retriever.ainvoke("test query")
+
+        mock_vector_store.asimilarity_search.assert_called_once_with(
+            "test query",
+            k=10,
+            filter={"article_id": {"$in": ["123", "456"]}},
+        )
 
     def test_with_config_returns_new_instance_with_updated_subject(self, mock_vector_store, mock_authorizer):
         """with_config creates a new retriever with updated subject_id."""

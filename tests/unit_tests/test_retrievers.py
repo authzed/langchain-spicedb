@@ -243,16 +243,12 @@ class TestSpiceDBRetrieverUnit:
             resource_type="document",
             resource_id_key="doc_id",
             permission="edit",
-            fail_open=True,
             use_tls=True,
         )
 
-        # Verify authorizer was initialized
         mock_authorizer.assert_called_once()
 
-        # Verify key parameters were passed (handle both positional and keyword args)
         call_args = mock_authorizer.call_args
-        # call_args is a tuple of (args, kwargs) or call object
         if hasattr(call_args, "kwargs"):
             call_kwargs = call_args.kwargs
         else:
@@ -263,3 +259,35 @@ class TestSpiceDBRetrieverUnit:
         assert call_kwargs.get("subject_type") == "user"
         assert call_kwargs.get("resource_type") == "document"
         assert call_kwargs.get("permission") == "edit"
+
+
+class TestSpiceDBRetrieverErrorHandling:
+    """Tests that SpiceDB errors propagate as exceptions."""
+
+    @pytest.fixture
+    def mock_base_retriever(self):
+        return MockRetriever()
+
+    @pytest.mark.asyncio
+    async def test_spicedb_error_raises_exception(self, mock_base_retriever):
+        """SpiceDB authorization failure must raise, not silently pass."""
+        with patch("langchain_spicedb.retrievers.SpiceDBAuthorizer") as mock_auth_class:
+            mock_instance = AsyncMock()
+            mock_instance.filter_documents = AsyncMock(
+                side_effect=Exception("SpiceDB connection refused")
+            )
+            mock_auth_class.return_value = mock_instance
+
+            retriever = SpiceDBRetriever(
+                base_retriever=mock_base_retriever,
+                spicedb_endpoint="localhost:50051",
+                spicedb_token="test_token",
+                subject_id="alice",
+                subject_type="user",
+                resource_type="article",
+                resource_id_key="article_id",
+                permission="view",
+            )
+
+            with pytest.raises(Exception, match="SpiceDB connection refused"):
+                await retriever.ainvoke("test query")

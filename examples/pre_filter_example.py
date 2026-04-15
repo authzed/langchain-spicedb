@@ -15,7 +15,6 @@ Use this pattern when users have access to a small fraction of a large corpus.
 import asyncio
 import os
 from typing import List
-from unittest.mock import AsyncMock
 from dotenv import load_dotenv
 from langchain_core.documents import Document
 from langchain_core.prompts import ChatPromptTemplate

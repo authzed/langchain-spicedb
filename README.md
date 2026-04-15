@@ -8,7 +8,8 @@ This package follows [LangChain's official integration guidelines](https://pytho
 
 - **LangChain & LangGraph Integration**: First-class support for modern LLM frameworks
 - **Vector Store Agnostic**: Compatible with Pinecone, FAISS, Weaviate, Chroma, and more
-- **Post-Filter Authorization**: Filters retrieved documents based on SpiceDB permissions
+- **Post-Filter Authorization**: Retrieve semantically, then filter by SpiceDB permissions
+- **Pre-Filter Authorization**: Fetch authorized resource IDs via LookupResources first, then run a filtered vector store search — ideal when users have access to a small fraction of a large corpus
 - **Efficient Bulk Permissions**: Uses SpiceDB's native bulk API for optimal performance
 - **Observable**: Returns detailed metrics about authorization decisions
 - **Type-Safe**: Full type hints for better IDE support
@@ -19,9 +20,10 @@ This package follows [LangChain's official integration guidelines](https://pytho
 Most RAG pipelines retrieve documents without considering user permissions. This package solves that by:
 
 1. **Post-retrieval filtering**: Retrieve best semantic matches first, then filter by permissions
-2. **Deterministic authorization**: Every document is checked against SpiceDB before being used
-3. **Framework integration**: Native LangChain and LangGraph components for seamless integration
-4. **Vector store agnostic**: Not tied to any specific vector database
+2. **Pre-retrieval filtering**: Fetch all resource IDs the user can access via SpiceDB's `LookupResources` API, then run a filtered vector store search — no unauthorized documents are retrieved
+3. **Deterministic authorization**: Every document is checked against SpiceDB before being used
+4. **Framework integration**: Native LangChain and LangGraph components for seamless integration
+5. **Vector store agnostic**: Not tied to any specific vector database
 
 ## Which Component Should I Use?
 

@@ -326,6 +326,12 @@ class TestSpiceDBAuthorizerLookupResources:
 
             assert result == ["123", "456"]
             mock_client.LookupResources.assert_called_once()
+            call_args = mock_client.LookupResources.call_args
+            request = call_args[0][0]  # first positional arg
+            assert request.permission == "view"
+            assert request.resource_object_type == "article"
+            assert request.subject.object.object_type == "user"
+            assert request.subject.object.object_id == "tim"
 
     @pytest.mark.asyncio
     async def test_lookup_resources_returns_empty_when_no_access(self):
@@ -349,6 +355,7 @@ class TestSpiceDBAuthorizerLookupResources:
             result = await authorizer.lookup_resources(subject_id="tim")
 
             assert result == []
+            mock_client.LookupResources.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_lookup_resources_propagates_error(self):

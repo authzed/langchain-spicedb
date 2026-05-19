@@ -31,7 +31,6 @@ Choose the right component based on your use case:
 
 | Component | Pattern | Use Case |
 |-----------|---------|----------|
-| **SpiceDBRetriever** | Post-filter | Simple RAG pipelines. Drop-in replacement for any retriever. Retrieves semantically then filters by permission. Best when users have broad access. |
 | **SpiceDBPreFilterRetriever** | Pre-filter | Use when users can only access a small fraction of a large corpus. Fetches authorized IDs from SpiceDB first, then runs a filtered vector search. Requires a `filter_factory` matching your vector store's filter syntax. |
 | **SpiceDBAuthFilter** | Post-filter | LangChain chains with middleware. Filtering documents in the middle of a chain. Reusable across different users via `config`. |
 | **create_auth_node** | Post-filter | LangGraph workflows. Complex multi-step workflows with state management. Provides authorization metrics in state. |
@@ -41,12 +40,8 @@ Choose the right component based on your use case:
 ### Quick Decision Guide
 
 **Pre-filter vs Post-filter:**
-- Use **post-filter** (`SpiceDBRetriever`, `SpiceDBAuthFilter`) when users have access to most documents. Semantic search quality is highest because all documents are candidates.
+- Use **post-filter** (`SpiceDBAuthFilter`) when users have access to most documents. Semantic search quality is highest because all documents are candidates.
 - Use **pre-filter** (`SpiceDBPreFilterRetriever`) when users have access to a small subset of a large corpus. Avoids retrieving unauthorized content entirely. Requires knowing your vector store's filter syntax.
-
-**Use SpiceDBRetriever if:**
-- You have a simple RAG pipeline
-- You always use the same user per retriever instance and you don't need to reuse the retriever across different users
 
 **Use SpiceDBAuthFilter if:**
 - You're building LangChain LCEL chains
@@ -65,17 +60,7 @@ Choose the right component based on your use case:
 
 ### Example: Same Pipeline, Different Patterns
 
-**Pattern 1: SpiceDBRetriever (simplest)**
-```python
-retriever = SpiceDBRetriever(
-    base_retriever=vectorstore.as_retriever(),
-    subject_id="alice",  # Fixed user
-    ...
-)
-chain = retriever | prompt | llm
-```
-
-**Pattern 2: SpiceDBAuthFilter (reusable)**
+**Pattern 1: SpiceDBAuthFilter (reusable)**
 ```python
 auth = SpiceDBAuthFilter(...)
 chain = retriever | auth | prompt | llm
@@ -85,20 +70,20 @@ await chain.ainvoke("question", config={"configurable": {"subject_id": "alice"}}
 await chain.ainvoke("question", config={"configurable": {"subject_id": "bob"}})
 ```
 
-**Pattern 3: LangGraph Node (stateful)**
+**Pattern 2: LangGraph Node (stateful)**
 ```python
 graph.add_node("authorize", create_auth_node(...))
 # Authorization metrics available in state['auth_results']
 ```
 
-**Pattern 4: Agent Tool (agentic)**
+**Pattern 3: Agent Tool (agentic)**
 ```python
 tools = [SpiceDBPermissionTool(...)]
 agent = create_agent(llm, tools, system_prompt="You are a helpful assistant.")
 # Agent can check "Can user alice delete document 123?" and explain the result
 ```
 
-**Pattern 5: SpiceDBPreFilterRetriever (pre-filter)**
+**Pattern 4: SpiceDBPreFilterRetriever (pre-filter)**
 ```python
 retriever = SpiceDBPreFilterRetriever(
     vector_store=vector_store,
@@ -244,25 +229,6 @@ result = await app.ainvoke({
 - **[Testing Guide](tests/README.md)** - Running tests and integration testing
 
 ## Components
-
-### SpiceDBRetriever
-
-Wraps any LangChain retriever with SpiceDB authorization:
-
-```python
-from langchain_spicedb import SpiceDBRetriever
-
-retriever = SpiceDBRetriever(
-    base_retriever=vector_store.as_retriever(),
-    subject_id="alice",
-    spicedb_endpoint="localhost:50051",
-    spicedb_token="sometoken",
-    resource_type="article",
-    resource_id_key="article_id",
-)
-
-docs = await retriever.ainvoke("query")
-```
 
 ### SpiceDBPermissionTool
 

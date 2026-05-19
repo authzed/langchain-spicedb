@@ -46,7 +46,7 @@ except ImportError:
 
 # Import LangChain standard components (retrievers, tools)
 try:
-    from .retrievers import SpiceDBRetriever, SpiceDBPreFilterRetriever  # noqa: F401
+    from .retrievers import SpiceDBPreFilterRetriever  # noqa: F401
 
     _has_retrievers = True
 except ImportError:
@@ -74,7 +74,7 @@ if _has_langchain:
     __all__.extend(["SpiceDBAuthFilter", "SpiceDBAuthLambda"])
 
 if _has_retrievers:
-    __all__.extend(["SpiceDBRetriever", "SpiceDBPreFilterRetriever"])
+    __all__.extend(["SpiceDBPreFilterRetriever"])
 
 if _has_tools:
     __all__.extend(["SpiceDBPermissionTool", "SpiceDBBulkPermissionTool"])

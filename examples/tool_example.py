@@ -87,7 +87,7 @@ Available permissions: view, edit, delete
     print()
 
     result = await agent.ainvoke(
-        {"messages": [{"role": "user", "content": "Can user tim view article 123?"}]}
+        {"messages": [{"role": "user", "content": "Can user alice view article 123?"}]}
     )
     print(f"\nAgent Response:\n{result['messages'][-1].content}")
     print()
@@ -104,7 +104,7 @@ Available permissions: view, edit, delete
             "messages": [
                 {
                     "role": "user",
-                    "content": "Which of these articles can user tim view: 123, 456, 789?",
+                    "content": "Which of these articles can user alice view: 123, 456, 789?",
                 }
             ]
         }
@@ -120,7 +120,7 @@ Available permissions: view, edit, delete
     print()
 
     result = await agent.ainvoke(
-        {"messages": [{"role": "user", "content": "Can user alice edit article 123?"}]}
+        {"messages": [{"role": "user", "content": "Can user alice edit article 101?"}]}
     )
     print(f"\nAgent Response:\n{result['messages'][-1].content}")
     print()
@@ -270,10 +270,23 @@ if __name__ == "__main__":
     print("Prerequisites:")
     print("1. SpiceDB running on localhost:50051 (or set SPICEDB_ENDPOINT)")
     print("2. Set SPICEDB_TOKEN environment variable")
-    print("3. SpiceDB schema configured with 'article' resource type")
-    print(
-        "4. Test relationships created (e.g., zed relationship create article:123 viewer user:tim)"
-    )
+    print("3. SpiceDB schema with view/edit/delete permissions:")
+    print()
+    print("""   definition user {}
+
+   definition article {
+       relation viewer: user
+       relation editor: user
+       relation deleter: user
+       permission view = viewer + editor + deleter
+       permission edit = editor + deleter
+       permission delete = deleter
+   }""")
+    print()
+    print("4. Test relationships:")
+    print("   zed relationship create article:123 viewer user:tim")
+    print("   zed relationship create article:456 editor user:alice")
+    print("   zed relationship create article:101 viewer user:alice")
     print()
     print("For agent examples:")
     print("5. Set OPENAI_API_KEY environment variable")
@@ -289,5 +302,5 @@ if __name__ == "__main__":
         print()
 
     # These examples work without OpenAI
-    asyncio.run(direct_tool_usage())
-    asyncio.run(multi_permission_workflow())
+    # asyncio.run(direct_tool_usage())
+    # asyncio.run(multi_permission_workflow())

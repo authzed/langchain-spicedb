@@ -34,6 +34,7 @@ Choose the right component based on your use case:
 | **SpiceDBPreFilterRetriever** | Pre-filter | Use when users can only access a small fraction of a large corpus. Fetches authorized IDs from SpiceDB first, then runs a filtered vector search. Requires a `filter_factory` matching your vector store's filter syntax. |
 | **SpiceDBAuthFilter** | Post-filter | LangChain chains with middleware. Filtering documents in the middle of a chain. Reusable across different users via `config`. |
 | **create_auth_node** | Post-filter | LangGraph workflows. Complex multi-step workflows with state management. Provides authorization metrics in state. |
+| **create_pre_filter_auth_node** | Pre-filter | LangGraph workflows. Single node that fetches authorized IDs via LookupResources then runs a filtered vector search. Reads `question` + `subject_id` from state. No separate retrieval step needed. |
 | **SpiceDBPermissionTool** | Check | Agentic workflows. Give agents the ability to check a single permission before taking actions. |
 | **SpiceDBBulkPermissionTool** | Check | Agentic workflows (batch). Same as above but for checking multiple resources at once. |
 
@@ -52,6 +53,12 @@ Choose the right component based on your use case:
 - You're using LangGraph for complex workflows
 - You need state management and observability
 - You're building multi-step agentic workflows
+
+**Use create_pre_filter_auth_node if:**
+- You're using LangGraph and want pre-filter authorization in a single node
+- You want to avoid a separate retrieval step — the node does LookupResources + vector search together
+- Users have access to a small fraction of a large corpus
+- Use `SpiceDBPreFilterRetriever` instead if you're building plain LangChain LCEL chains (not LangGraph)
 
 **Use SpiceDBPermissionTool / SpiceDBBulkPermissionTool if:**
 - You're building agents with LangChain
@@ -95,6 +102,21 @@ retriever = SpiceDBPreFilterRetriever(
     spicedb_token="sometoken",
 )
 chain = retriever | prompt | llm
+```
+
+**Pattern 5: LangGraph Pre-filter Node (combined lookup + retrieval)**
+```python
+graph.add_node("retrieve_authorized", create_pre_filter_auth_node(
+    vector_store=vector_store,
+    filter_factory=lambda ids: {"filter": {"article_id": {"$in": ids}}},
+    resource_type="article",
+    permission="view",
+    spicedb_endpoint="localhost:50051",
+    spicedb_token="sometoken",
+))
+# State must contain: subject_id, question
+# State receives: authorized_documents
+graph.add_edge("retrieve_authorized", "generate")
 ```
 
 ## Installation

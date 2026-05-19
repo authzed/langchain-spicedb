@@ -61,7 +61,7 @@ except ImportError:
 
 # Import LangGraph components (if available)
 try:
-    from .langgraph_node import create_auth_node, AuthorizationNode, RAGAuthState  # noqa: F401
+    from .langgraph_node import create_auth_node, create_pre_filter_auth_node, AuthorizationNode, RAGAuthState  # noqa: F401
 
     _has_langgraph = True
 except ImportError:
@@ -80,4 +80,4 @@ if _has_tools:
     __all__.extend(["SpiceDBPermissionTool", "SpiceDBBulkPermissionTool"])
 
 if _has_langgraph:
-    __all__.extend(["create_auth_node", "AuthorizationNode", "RAGAuthState"])
+    __all__.extend(["create_auth_node", "create_pre_filter_auth_node", "AuthorizationNode", "RAGAuthState"])

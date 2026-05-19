@@ -178,7 +178,7 @@ examples/
 ├── retriever_example.py               # SpiceDBRetriever demo
 ├── tool_example.py                    # SpiceDBPermissionTool demo
 ├── langchain_example.py               # Custom chains with SpiceDBAuthFilter
-└── langgraph_visualization_example.py # LangGraph integration
+└── langgraph_postfilter_example.py # LangGraph post-filter authorization
 ```
 
 ### 1. SpiceDBRetriever Example (`retriever_example.py`)
@@ -266,7 +266,7 @@ User tim can access: 123, 456
 User tim cannot access: 789
 ```
 
-### 3. LangGraph Integration Example (`langgraph_visualization_example.py`)
+### 3. LangGraph Integration Example (`langgraph_postfilter_example.py`)
 
 **What it does:** Demonstrates how to add authorization as a node in LangGraph workflows with state management and observability.
 
@@ -286,11 +286,11 @@ User tim cannot access: 789
 
 ```bash
 # Works without OpenAI - shows graph structure and flow
-python examples/langgraph_visualization_example.py
+python examples/langgraph_postfilter_example.py
 
 # Test different users
 export SUBJECT_ID=tim
-python examples/langgraph_visualization_example.py
+python examples/langgraph_postfilter_example.py
 ```
 
 **Expected output:**

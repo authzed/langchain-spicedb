@@ -86,7 +86,7 @@ async def main():
 
     for user, query in [
         ("alice", "What programming languages are mentioned?"),
-        ("bob", "Tell me about SpiceDB"),
+        ("tim", "Tell me about SpiceDB"),
     ]:
         print()
         print("-" * 80)
@@ -126,7 +126,7 @@ async def demo_without_openai():
         permission="view",
     )
 
-    for user in ["alice", "bob", "unauthorized_user"]:
+    for user in ["alice", "tim", "unauthorized_user"]:
         print(f"User: {user}")
         authorized = await auth.ainvoke(
             sample_docs,

@@ -306,7 +306,7 @@ The authorization node automatically adds metrics to the state under the `auth_r
 
 ### Complete Visualization Example
 
-See `examples/langgraph_visualization_example.py` for a complete demonstration with 7 different methods to prove and visualize the authorization node.
+See `examples/langgraph_postfilter_example.py` for a complete working example of a post-filter authorization graph with inspection and metrics.
 
 ## Advanced Patterns
 

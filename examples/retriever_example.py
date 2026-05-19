@@ -64,21 +64,25 @@ async def main():
         permission="view",
     )
 
-    prompt = ChatPromptTemplate.from_messages([
-        (
-            "system",
-            "Answer the question based only on the provided context. "
-            "If you don't have enough information, say so.",
-        ),
-        ("human", "Question: {question}\n\nContext:\n{context}"),
-    ])
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                "Answer the question based only on the provided context. "
+                "If you don't have enough information, say so.",
+            ),
+            ("human", "Question: {question}\n\nContext:\n{context}"),
+        ]
+    )
 
     # Build chain once, reuse for different users via config
     chain = (
-        RunnableParallel({
-            "context": RunnableLambda(mock_retriever) | auth | RunnableLambda(format_docs),
-            "question": RunnablePassthrough(),
-        })
+        RunnableParallel(
+            {
+                "context": RunnableLambda(mock_retriever) | auth | RunnableLambda(format_docs),
+                "question": RunnablePassthrough(),
+            }
+        )
         | prompt
         | llm
         | StrOutputParser()

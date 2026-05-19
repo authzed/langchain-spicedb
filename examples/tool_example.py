@@ -15,7 +15,15 @@ import os
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain.agents import create_agent
-from authzed.api.v1 import Client, WriteSchemaRequest, WriteRelationshipsRequest, RelationshipUpdate, Relationship, SubjectReference, ObjectReference
+from authzed.api.v1 import (
+    Client,
+    WriteSchemaRequest,
+    WriteRelationshipsRequest,
+    RelationshipUpdate,
+    Relationship,
+    SubjectReference,
+    ObjectReference,
+)
 from grpcutil import insecure_bearer_token_credentials, bearer_token_credentials
 
 from langchain_spicedb import SpiceDBPermissionTool, SpiceDBBulkPermissionTool
@@ -53,14 +61,18 @@ async def setup_spicedb(endpoint: str, token: str, use_tls: bool = False):
 
     updates = []
     for res_type, res_id, relation, sub_type, sub_id in RELATIONSHIPS:
-        updates.append(RelationshipUpdate(
-            operation=RelationshipUpdate.OPERATION_TOUCH,
-            relationship=Relationship(
-                resource=ObjectReference(object_type=res_type, object_id=res_id),
-                relation=relation,
-                subject=SubjectReference(object=ObjectReference(object_type=sub_type, object_id=sub_id)),
-            ),
-        ))
+        updates.append(
+            RelationshipUpdate(
+                operation=RelationshipUpdate.OPERATION_TOUCH,
+                relationship=Relationship(
+                    resource=ObjectReference(object_type=res_type, object_id=res_id),
+                    relation=relation,
+                    subject=SubjectReference(
+                        object=ObjectReference(object_type=sub_type, object_id=sub_id)
+                    ),
+                ),
+            )
+        )
     await client.WriteRelationships(WriteRelationshipsRequest(updates=updates))
     print("✓ SpiceDB schema and relationships written")
     print()

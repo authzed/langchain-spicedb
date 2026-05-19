@@ -21,8 +21,15 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableLambda, RunnableParallel, RunnablePassthrough
 from authzed.api.v1 import (
-    Client, WriteSchemaRequest, WriteRelationshipsRequest, DeleteRelationshipsRequest,
-    RelationshipUpdate, Relationship, SubjectReference, ObjectReference, RelationshipFilter,
+    Client,
+    WriteSchemaRequest,
+    WriteRelationshipsRequest,
+    DeleteRelationshipsRequest,
+    RelationshipUpdate,
+    Relationship,
+    SubjectReference,
+    ObjectReference,
+    RelationshipFilter,
 )
 from grpcutil import insecure_bearer_token_credentials, bearer_token_credentials
 
@@ -79,22 +86,24 @@ async def setup_spicedb(endpoint: str, token: str, use_tls: bool = False):
     await client.WriteSchema(WriteSchemaRequest(schema=SCHEMA))
 
     # Clear all existing article relationships so this example starts from a known state
-    await client.DeleteRelationships(DeleteRelationshipsRequest(
-        relationship_filter=RelationshipFilter(resource_type="article")
-    ))
+    await client.DeleteRelationships(
+        DeleteRelationshipsRequest(relationship_filter=RelationshipFilter(resource_type="article"))
+    )
 
     updates = []
     for res_type, res_id, relation, sub_type, sub_id in RELATIONSHIPS:
-        updates.append(RelationshipUpdate(
-            operation=RelationshipUpdate.OPERATION_TOUCH,
-            relationship=Relationship(
-                resource=ObjectReference(object_type=res_type, object_id=res_id),
-                relation=relation,
-                subject=SubjectReference(
-                    object=ObjectReference(object_type=sub_type, object_id=sub_id)
+        updates.append(
+            RelationshipUpdate(
+                operation=RelationshipUpdate.OPERATION_TOUCH,
+                relationship=Relationship(
+                    resource=ObjectReference(object_type=res_type, object_id=res_id),
+                    relation=relation,
+                    subject=SubjectReference(
+                        object=ObjectReference(object_type=sub_type, object_id=sub_id)
+                    ),
                 ),
-            ),
-        ))
+            )
+        )
     await client.WriteRelationships(WriteRelationshipsRequest(updates=updates))
     print("✓ SpiceDB schema and relationships written")
     print()
@@ -175,7 +184,7 @@ async def demo_without_openai():
         ("alice", "Tell me about authorization databases"),
     ]:
         print("-" * 60)
-        print(f"User: {user}  |  Query: \"{query}\"")
+        print(f'User: {user}  |  Query: "{query}"')
         retriever = base_retriever.with_config(subject_id=user)
         docs = await retriever.ainvoke(query)
         print(f"  Retrieved {len(docs)} document(s):")
@@ -204,16 +213,19 @@ async def main():
         return "\n\n".join(d.page_content for d in docs)
 
     from langchain_openai import ChatOpenAI
+
     llm = ChatOpenAI(api_key=os.getenv("OPENAI_API_KEY"), model="gpt-4o-mini", temperature=0)
 
-    prompt = ChatPromptTemplate.from_messages([
-        (
-            "system",
-            "Answer the question based only on the provided context. "
-            "If the context doesn't contain enough information, say so.",
-        ),
-        ("human", "Question: {question}\n\nContext:\n{context}"),
-    ])
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                "Answer the question based only on the provided context. "
+                "If the context doesn't contain enough information, say so.",
+            ),
+            ("human", "Question: {question}\n\nContext:\n{context}"),
+        ]
+    )
 
     base_retriever = SpiceDBPreFilterRetriever(
         vector_store=vector_store,
@@ -233,16 +245,18 @@ async def main():
     ]:
         print()
         print("-" * 80)
-        print(f"User: {user}  |  Query: \"{query}\"")
+        print(f'User: {user}  |  Query: "{query}"')
         print("-" * 80)
 
         retriever = base_retriever.with_config(subject_id=user)
 
         chain = (
-            RunnableParallel({
-                "context": retriever | RunnableLambda(format_docs),
-                "question": RunnablePassthrough(),
-            })
+            RunnableParallel(
+                {
+                    "context": retriever | RunnableLambda(format_docs),
+                    "question": RunnablePassthrough(),
+                }
+            )
             | prompt
             | llm
             | StrOutputParser()

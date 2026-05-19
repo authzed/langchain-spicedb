@@ -14,8 +14,13 @@ from langchain_core.documents import Document
 from langchain_core.prompts import ChatPromptTemplate
 from langgraph.graph import StateGraph, END
 from authzed.api.v1 import (
-    Client, WriteSchemaRequest, WriteRelationshipsRequest,
-    RelationshipUpdate, Relationship, SubjectReference, ObjectReference,
+    Client,
+    WriteSchemaRequest,
+    WriteRelationshipsRequest,
+    RelationshipUpdate,
+    Relationship,
+    SubjectReference,
+    ObjectReference,
 )
 from grpcutil import insecure_bearer_token_credentials, bearer_token_credentials
 
@@ -50,16 +55,18 @@ async def setup_spicedb(endpoint: str, token: str, use_tls: bool = False):
 
     updates = []
     for res_type, res_id, relation, sub_type, sub_id in RELATIONSHIPS:
-        updates.append(RelationshipUpdate(
-            operation=RelationshipUpdate.OPERATION_TOUCH,
-            relationship=Relationship(
-                resource=ObjectReference(object_type=res_type, object_id=res_id),
-                relation=relation,
-                subject=SubjectReference(
-                    object=ObjectReference(object_type=sub_type, object_id=sub_id)
+        updates.append(
+            RelationshipUpdate(
+                operation=RelationshipUpdate.OPERATION_TOUCH,
+                relationship=Relationship(
+                    resource=ObjectReference(object_type=res_type, object_id=res_id),
+                    relation=relation,
+                    subject=SubjectReference(
+                        object=ObjectReference(object_type=sub_type, object_id=sub_id)
+                    ),
                 ),
-            ),
-        ))
+            )
+        )
     await client.WriteRelationships(WriteRelationshipsRequest(updates=updates))
     print("✓ SpiceDB schema and relationships written")
     print()
@@ -98,10 +105,13 @@ async def generate_node(state: RAGAuthState) -> dict:
     openai_key = os.getenv("OPENAI_API_KEY")
     if openai_key:
         from langchain_openai import ChatOpenAI
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", "Answer the question using only the provided context. Be concise."),
-            ("human", "Question: {question}\n\nContext:\n{context}"),
-        ])
+
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", "Answer the question using only the provided context. Be concise."),
+                ("human", "Question: {question}\n\nContext:\n{context}"),
+            ]
+        )
         llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
         messages = prompt.format_messages(question=state["question"], context=context)
         response = await llm.ainvoke(messages)
@@ -251,7 +261,6 @@ async def main():
     else:
         print("❌ No authorization metrics found (node may not have executed)")
     print()
-
 
 
 if __name__ == "__main__":

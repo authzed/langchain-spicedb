@@ -109,27 +109,29 @@ async def main():
 
     llm = ChatOpenAI(api_key=os.getenv("OPENAI_API_KEY"), model="gpt-4o-mini", temperature=0)
 
-    prompt = ChatPromptTemplate.from_messages([
-        (
-            "system",
-            "Answer questions based only on the provided context. "
-            "If the context doesn't contain enough information, say so.",
-        ),
-        ("human", "Question: {question}\n\nContext:\n{context}"),
-    ])
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                "Answer questions based only on the provided context. "
+                "If the context doesn't contain enough information, say so.",
+            ),
+            ("human", "Question: {question}\n\nContext:\n{context}"),
+        ]
+    )
 
     def format_docs(docs):
         if not docs:
             return "No authorized documents found."
-        return "\n\n".join(
-            f"Document {i + 1}:\n{doc.page_content}" for i, doc in enumerate(docs)
-        )
+        return "\n\n".join(f"Document {i + 1}:\n{doc.page_content}" for i, doc in enumerate(docs))
 
     rag_chain = (
-        RunnableParallel({
-            "context": retriever | format_docs,
-            "question": RunnablePassthrough(),
-        })
+        RunnableParallel(
+            {
+                "context": retriever | format_docs,
+                "question": RunnablePassthrough(),
+            }
+        )
         | prompt
         | llm
         | StrOutputParser()

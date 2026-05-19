@@ -177,7 +177,7 @@ examples/
 ├── README.md                          # This file
 ├── retriever_example.py               # SpiceDBRetriever demo
 ├── tool_example.py                    # SpiceDBPermissionTool demo
-├── langchain_example.py               # Custom chains with SpiceDBAuthLambda
+├── langchain_example.py               # Custom chains with SpiceDBAuthFilter
 └── langgraph_visualization_example.py # LangGraph integration
 ```
 
@@ -324,7 +324,7 @@ Read [this doc](https://github.com/authzed/langchain-spicedb/blob/main/docs/lang
 
 ### 4. Custom Chain Example (`langchain_example.py`)
 
-Low-level authorization filtering using `SpiceDBAuthLambda` with LangChain Expression Language (LCEL).
+Low-level authorization filtering using `SpiceDBAuthFilter` directly in a LangChain Expression Language (LCEL) chain.
 
 **Note:** For most use cases, prefer `SpiceDBRetriever` (example 1)
 

@@ -38,7 +38,7 @@ __version__ = "0.1.0"
 
 # Import LangChain components (if available)
 try:
-    from .langchain_runnable import SpiceDBAuthFilter, SpiceDBAuthLambda  # noqa: F401
+    from .langchain_runnable import SpiceDBAuthFilter  # noqa: F401
 
     _has_langchain = True
 except ImportError:
@@ -71,7 +71,7 @@ except ImportError:
 __all__ = []
 
 if _has_langchain:
-    __all__.extend(["SpiceDBAuthFilter", "SpiceDBAuthLambda"])
+    __all__.extend(["SpiceDBAuthFilter"])
 
 if _has_retrievers:
     __all__.extend(["SpiceDBPreFilterRetriever"])

@@ -27,7 +27,11 @@ definition user {}
 
 definition article {
     relation viewer: user
-    permission view = viewer
+    relation editor: user
+    relation deleter: user
+    permission view = viewer + editor + deleter
+    permission edit = editor + deleter
+    permission delete = deleter
 }
 """
 

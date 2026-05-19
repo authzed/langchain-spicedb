@@ -6,8 +6,67 @@ Set environment variables SPICEDB_ENDPOINT and SPICEDB_TOKEN to run these tests.
 
 import os
 import pytest
+from authzed.api.v1 import (
+    Client,
+    ObjectReference,
+    Relationship,
+    RelationshipUpdate,
+    SubjectReference,
+    WriteRelationshipsRequest,
+    WriteSchemaRequest,
+)
+from grpcutil import insecure_bearer_token_credentials
 
 from langchain_spicedb import SpiceDBPermissionTool, SpiceDBBulkPermissionTool
+
+SCHEMA = """
+definition user {}
+
+definition article {
+    relation viewer: user
+    relation editor: user
+    relation deleter: user
+    permission view = viewer + editor + deleter
+    permission edit = editor + deleter
+    permission delete = deleter
+}
+"""
+
+RELATIONSHIPS = [
+    ("article", "123", "viewer", "user", "tim"),
+    ("article", "456", "viewer", "user", "tim"),
+    ("article", "123", "viewer", "user", "alice"),
+    ("article", "456", "editor", "user", "alice"),
+    ("article", "789", "viewer", "user", "alice"),
+]
+
+
+@pytest.fixture(scope="session", autouse=True)
+def spicedb_setup():
+    """Write schema and seed relationships once per test session."""
+    if not os.getenv("SPICEDB_ENDPOINT"):
+        return
+
+    endpoint = os.getenv("SPICEDB_ENDPOINT", "localhost:50051")
+    token = os.getenv("SPICEDB_TOKEN", "somerandomkeyhere")
+    client = Client(endpoint, insecure_bearer_token_credentials(token))
+
+    client.WriteSchema(WriteSchemaRequest(schema=SCHEMA))
+
+    updates = [
+        RelationshipUpdate(
+            operation=RelationshipUpdate.OPERATION_TOUCH,
+            relationship=Relationship(
+                resource=ObjectReference(object_type=res_type, object_id=res_id),
+                relation=relation,
+                subject=SubjectReference(
+                    object=ObjectReference(object_type=sub_type, object_id=sub_id)
+                ),
+            ),
+        )
+        for res_type, res_id, relation, sub_type, sub_id in RELATIONSHIPS
+    ]
+    client.WriteRelationships(WriteRelationshipsRequest(updates=updates))
 
 
 @pytest.fixture

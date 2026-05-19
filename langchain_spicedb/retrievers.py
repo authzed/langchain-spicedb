@@ -147,6 +147,7 @@ class SpiceDBPreFilterRetriever(BaseRetriever):
     ) -> List[Document]:
         """Synchronous retrieval — delegates to async implementation."""
         import asyncio
+
         return asyncio.run(self._aget_relevant_documents(query, run_manager=run_manager))
 
     async def _aget_relevant_documents(
@@ -170,9 +171,7 @@ class SpiceDBPreFilterRetriever(BaseRetriever):
             return []
 
         search_kwargs = self.filter_factory(authorized_ids)
-        docs = await self.vector_store.asimilarity_search(
-            query, k=self.k, **search_kwargs
-        )
+        docs = await self.vector_store.asimilarity_search(query, k=self.k, **search_kwargs)
         return docs
 
     def with_config(

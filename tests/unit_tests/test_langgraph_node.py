@@ -1,4 +1,5 @@
 """Unit tests for LangGraph authorization nodes."""
+
 import pytest
 from unittest.mock import AsyncMock, patch
 from langchain_core.documents import Document
@@ -12,9 +13,11 @@ class TestCreatePreFilterAuthNode:
     @pytest.fixture
     def mock_vector_store(self):
         mock = AsyncMock()
-        mock.asimilarity_search = AsyncMock(return_value=[
-            Document(page_content="Doc 1", metadata={"article_id": "123"}),
-        ])
+        mock.asimilarity_search = AsyncMock(
+            return_value=[
+                Document(page_content="Doc 1", metadata={"article_id": "123"}),
+            ]
+        )
         return mock
 
     @pytest.fixture

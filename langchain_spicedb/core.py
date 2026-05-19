@@ -103,6 +103,7 @@ class SpiceDBAuthorizer:
 
         if use_tls:
             from grpcutil import bearer_token_credentials
+
             credentials = bearer_token_credentials(spicedb_token)
         else:
             credentials = insecure_bearer_token_credentials(spicedb_token)
@@ -329,16 +330,11 @@ class SpiceDBAuthorizer:
             for resource_id in resource_ids
         ]
 
-        response = await self.client.CheckBulkPermissions(
-            CheckBulkPermissionsRequest(items=items)
-        )
+        response = self.client.CheckBulkPermissions(CheckBulkPermissionsRequest(items=items))
 
         authorized_ids = []
         for i, pair in enumerate(response.pairs):
-            if (
-                pair.item.permissionship
-                == CheckPermissionResponse.PERMISSIONSHIP_HAS_PERMISSION
-            ):
+            if pair.item.permissionship == CheckPermissionResponse.PERMISSIONSHIP_HAS_PERMISSION:
                 authorized_ids.append(resource_ids[i])
 
         return authorized_ids

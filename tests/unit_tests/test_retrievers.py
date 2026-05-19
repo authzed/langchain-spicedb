@@ -105,9 +105,11 @@ class TestSpiceDBPreFilterRetrieverUnit:
     def mock_vector_store(self):
         """Mock vector store that returns one document."""
         mock = AsyncMock()
-        mock.asimilarity_search = AsyncMock(return_value=[
-            Document(page_content="Doc 1", metadata={"article_id": "123"}),
-        ])
+        mock.asimilarity_search = AsyncMock(
+            return_value=[
+                Document(page_content="Doc 1", metadata={"article_id": "123"}),
+            ]
+        )
         return mock
 
     @pytest.fixture
@@ -138,13 +140,18 @@ class TestSpiceDBPreFilterRetrieverUnit:
     def test_pre_filter_retriever_is_base_retriever(self):
         """SpiceDBPreFilterRetriever is a LangChain BaseRetriever."""
         from langchain_core.retrievers import BaseRetriever
+
         assert issubclass(SpiceDBPreFilterRetriever, BaseRetriever)
 
     @pytest.mark.asyncio
-    async def test_lookup_called_then_vector_store_searched(self, mock_vector_store, mock_authorizer):
+    async def test_lookup_called_then_vector_store_searched(
+        self, mock_vector_store, mock_authorizer
+    ):
         """Retriever calls lookup_resources first, then similarity_search with filter."""
+
         def filter_factory(ids):
             return {"filter": {"article_id": {"$in": ids}}}
+
         retriever = SpiceDBPreFilterRetriever(
             vector_store=mock_vector_store,
             filter_factory=filter_factory,
@@ -167,7 +174,9 @@ class TestSpiceDBPreFilterRetrieverUnit:
         assert docs[0].metadata["article_id"] == "123"
 
     @pytest.mark.asyncio
-    async def test_empty_authorized_ids_skips_vector_store(self, mock_vector_store, mock_authorizer):
+    async def test_empty_authorized_ids_skips_vector_store(
+        self, mock_vector_store, mock_authorizer
+    ):
         """When no resources are authorized, returns [] without querying the vector store."""
         mock_authorizer.return_value.lookup_resources = AsyncMock(return_value=[])
         retriever = SpiceDBPreFilterRetriever(
@@ -205,7 +214,9 @@ class TestSpiceDBPreFilterRetrieverUnit:
             await retriever.ainvoke("test query")
 
     @pytest.mark.asyncio
-    async def test_custom_k_forwarded_to_similarity_search(self, mock_vector_store, mock_authorizer):
+    async def test_custom_k_forwarded_to_similarity_search(
+        self, mock_vector_store, mock_authorizer
+    ):
         """k parameter is forwarded to asimilarity_search."""
         retriever = SpiceDBPreFilterRetriever(
             vector_store=mock_vector_store,
@@ -227,7 +238,9 @@ class TestSpiceDBPreFilterRetrieverUnit:
             filter={"article_id": {"$in": ["123", "456"]}},
         )
 
-    def test_with_config_returns_new_instance_with_updated_subject(self, mock_vector_store, mock_authorizer):
+    def test_with_config_returns_new_instance_with_updated_subject(
+        self, mock_vector_store, mock_authorizer
+    ):
         """with_config creates a new retriever with updated subject_id."""
         retriever = SpiceDBPreFilterRetriever(
             vector_store=mock_vector_store,

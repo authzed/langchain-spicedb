@@ -6,9 +6,10 @@ with any RAG pipeline, regardless of the framework (LangChain, LangGraph, etc.)
 or vector store (Pinecone, FAISS, Weaviate, etc.).
 """
 
-from typing import List, Dict, Any, Optional
-from dataclasses import dataclass, field
+import asyncio
 import time
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional
 from authzed.api.v1 import (
     Client,
     CheckPermissionRequest,
@@ -104,11 +105,31 @@ class SpiceDBAuthorizer:
         if use_tls:
             from grpcutil import bearer_token_credentials
 
-            credentials = bearer_token_credentials(spicedb_token)
+            self._credentials = bearer_token_credentials(spicedb_token)
         else:
-            credentials = insecure_bearer_token_credentials(spicedb_token)
+            self._credentials = insecure_bearer_token_credentials(spicedb_token)
 
-        self.client = Client(spicedb_endpoint, credentials)
+        # Client is created lazily on first async call so that Client.create_channel()
+        # always sees a running event loop and chooses grpc.aio (async channel).
+        # If created at __init__ time from a sync context, it would use a sync channel
+        # and await calls in async methods would fail.
+        # The client is also recreated when the event loop changes, because grpc.aio
+        # channels are bound to the loop they were created in. Each asyncio.run() call
+        # creates a new loop, so multi-call sync usage requires a fresh client per loop.
+        self._client: Optional[Client] = None
+        self._client_loop: Optional[asyncio.AbstractEventLoop] = None
+
+    @property
+    def client(self) -> Client:
+        try:
+            current_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            current_loop = None
+
+        if self._client is None or self._client_loop is not current_loop:
+            self._client = Client(self.spicedb_endpoint, self._credentials)
+            self._client_loop = current_loop
+        return self._client
 
     async def filter_documents(
         self,
@@ -330,7 +351,7 @@ class SpiceDBAuthorizer:
             for resource_id in resource_ids
         ]
 
-        response = self.client.CheckBulkPermissions(CheckBulkPermissionsRequest(items=items))
+        response = await self.client.CheckBulkPermissions(CheckBulkPermissionsRequest(items=items))
 
         authorized_ids = []
         for i, pair in enumerate(response.pairs):

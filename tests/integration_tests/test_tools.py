@@ -7,7 +7,7 @@ Set environment variables SPICEDB_ENDPOINT and SPICEDB_TOKEN to run these tests.
 import os
 import pytest
 from authzed.api.v1 import (
-    Client,
+    SyncClient,
     ObjectReference,
     Relationship,
     RelationshipUpdate,
@@ -49,7 +49,7 @@ def spicedb_setup():
 
     endpoint = os.getenv("SPICEDB_ENDPOINT", "localhost:50051")
     token = os.getenv("SPICEDB_TOKEN", "somerandomkeyhere")
-    client = Client(endpoint, insecure_bearer_token_credentials(token))
+    client = SyncClient(endpoint, insecure_bearer_token_credentials(token))
 
     client.WriteSchema(WriteSchemaRequest(schema=SCHEMA))
 

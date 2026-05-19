@@ -143,7 +143,8 @@ class TestSpiceDBPreFilterRetrieverUnit:
     @pytest.mark.asyncio
     async def test_lookup_called_then_vector_store_searched(self, mock_vector_store, mock_authorizer):
         """Retriever calls lookup_resources first, then similarity_search with filter."""
-        filter_factory = lambda ids: {"filter": {"article_id": {"$in": ids}}}
+        def filter_factory(ids):
+            return {"filter": {"article_id": {"$in": ids}}}
         retriever = SpiceDBPreFilterRetriever(
             vector_store=mock_vector_store,
             filter_factory=filter_factory,

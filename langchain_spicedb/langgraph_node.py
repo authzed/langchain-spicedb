@@ -5,7 +5,7 @@ This module provides functions to create LangGraph-compatible nodes
 for SpiceDB authorization that can be added to state graphs.
 """
 
-from typing import Any, Dict, TypedDict, Optional, List
+from typing import Any, Callable, Dict, TypedDict, Optional, List
 from .core import SpiceDBAuthorizer
 
 
@@ -45,14 +45,13 @@ class RAGAuthState(TypedDict, total=False):
     answer: str
 
 
-def create_auth_node(
+def create_check_permissions_node(
     spicedb_endpoint: str = "localhost:50051",
     spicedb_token: str = "sometoken",
     resource_type: str = "document",
     subject_type: str = "user",
     permission: str = "view",
     resource_id_key: str = "resource_id",
-    fail_open: bool = False,
     use_tls: bool = False,
 ):
     """
@@ -68,7 +67,6 @@ def create_auth_node(
         subject_type: SpiceDB subject type
         permission: Permission to check
         resource_id_key: Key in document metadata containing resource ID
-        fail_open: If True, allow access on errors
         use_tls: Whether to use TLS for SpiceDB connection
 
     Returns:
@@ -76,10 +74,10 @@ def create_auth_node(
 
     Example:
         >>> from langgraph.graph import StateGraph
-        >>> from spicedb_rag_auth.langgraph import create_auth_node
+        >>> from spicedb_rag_auth.langgraph import create_check_permissions_node
         >>>
         >>> graph = StateGraph(MyState)
-        >>> graph.add_node("authorize", create_auth_node(
+        >>> graph.add_node("authorize", create_check_permissions_node(
         ...     spicedb_endpoint="localhost:50051",
         ...     spicedb_token="sometoken",
         ...     resource_type="article",
@@ -94,7 +92,6 @@ def create_auth_node(
         subject_type=subject_type,
         permission=permission,
         resource_id_key=resource_id_key,
-        fail_open=fail_open,
         use_tls=use_tls,
     )
 
@@ -174,7 +171,6 @@ class AuthorizationNode:
         subject_type: str = "user",
         permission: str = "view",
         resource_id_key: str = "resource_id",
-        fail_open: bool = False,
         use_tls: bool = False,
         state_keys: Optional[Dict[str, str]] = None,
     ):
@@ -188,7 +184,6 @@ class AuthorizationNode:
             subject_type: SpiceDB subject type
             permission: Permission to check
             resource_id_key: Key in document metadata containing resource ID
-            fail_open: If True, allow access on errors
             use_tls: Whether to use TLS for SpiceDB connection
             state_keys: Custom state key mappings (e.g., {"documents": "docs"})
         """
@@ -199,7 +194,6 @@ class AuthorizationNode:
             subject_type=subject_type,
             permission=permission,
             resource_id_key=resource_id_key,
-            fail_open=fail_open,
             use_tls=use_tls,
         )
 
@@ -252,3 +246,87 @@ class AuthorizationNode:
             auth_docs_key: result.authorized_documents,
             auth_results_key: result.to_dict(),
         }
+
+
+def create_lookup_resources_node(
+    vector_store: Any,
+    filter_factory: Callable[[List[str]], Dict[str, Any]],
+    spicedb_endpoint: str = "localhost:50051",
+    spicedb_token: str = "sometoken",
+    resource_type: str = "document",
+    subject_type: str = "user",
+    permission: str = "view",
+    use_tls: bool = False,
+    k: int = 4,
+):
+    """
+    Create a LangGraph node for pre-filter authorization via LookupResources.
+
+    Unlike create_check_permissions_node (which post-filters after a separate retrieval step),
+    this node performs retrieval and authorization in one step: it calls SpiceDB's
+    LookupResources first, then runs a filtered vector store search so no
+    unauthorized documents are ever fetched.
+
+    Args:
+        vector_store: Vector store that supports asimilarity_search
+        filter_factory: Converts authorized IDs to vector store search_kwargs.
+            Example: lambda ids: {"filter": {"article_id": {"$in": ids}}}
+            The returned dict must not contain 'k' or 'query' as keys — those
+            are passed separately and will cause a TypeError if duplicated.
+        spicedb_endpoint: SpiceDB server address
+        spicedb_token: Pre-shared key for SpiceDB authentication
+        resource_type: SpiceDB resource type
+        subject_type: SpiceDB subject type
+        permission: Permission to check
+        use_tls: Whether to use TLS for SpiceDB connection
+        k: Number of documents to return from the vector store
+
+    Returns:
+        Async function usable as a LangGraph node
+
+    Expected state keys:
+        - subject_id (str, required): User ID for authorization
+        - question (str, required): Query string for the vector store search
+
+    Returns state update with:
+        - authorized_documents: Documents the subject is authorized to see
+
+    Example:
+        >>> graph.add_node("retrieve_authorized", create_lookup_resources_node(
+        ...     vector_store=vector_store,
+        ...     filter_factory=lambda ids: {"filter": {"article_id": {"$in": ids}}},
+        ...     spicedb_endpoint="localhost:50051",
+        ...     spicedb_token="sometoken",
+        ...     resource_type="article",
+        ... ))
+        >>> graph.add_edge("retrieve_authorized", "generate")
+    """
+    authorizer = SpiceDBAuthorizer(
+        spicedb_endpoint=spicedb_endpoint,
+        spicedb_token=spicedb_token,
+        resource_type=resource_type,
+        subject_type=subject_type,
+        permission=permission,
+        use_tls=use_tls,
+    )
+
+    async def pre_filter_auth_node(state: Dict[str, Any]) -> Dict[str, Any]:
+        subject_id = state.get("subject_id")
+        if not subject_id:
+            raise ValueError("subject_id must be present in state")
+
+        question = state.get("question")
+        if not question:
+            raise ValueError("question must be present in state")
+
+        authorized_ids = await authorizer.lookup_resources(subject_id=subject_id)
+
+        if not authorized_ids:
+            return {"authorized_documents": []}
+
+        search_kwargs = filter_factory(authorized_ids)
+        docs = await vector_store.asimilarity_search(question, k=k, **search_kwargs)
+
+        return {"authorized_documents": docs}
+
+    return pre_filter_auth_node

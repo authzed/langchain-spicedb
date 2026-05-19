@@ -21,10 +21,10 @@ Example (LangChain):
     >>> chain = retriever | auth.with_config(subject_id="alice") | prompt | llm
 
 Example (LangGraph):
-    >>> from langchain_spicedb import create_auth_node
+    >>> from langchain_spicedb import create_check_permissions_node
     >>>
     >>> graph = StateGraph(MyState)
-    >>> graph.add_node("authorize", create_auth_node(
+    >>> graph.add_node("authorize", create_check_permissions_node(
     ...     spicedb_endpoint="localhost:50051",
     ...     spicedb_token="sometoken",
     ...     subject_type="user",
@@ -38,7 +38,7 @@ __version__ = "0.1.0"
 
 # Import LangChain components (if available)
 try:
-    from .langchain_runnable import SpiceDBAuthFilter, SpiceDBAuthLambda  # noqa: F401
+    from .langchain_runnable import SpiceDBAuthFilter  # noqa: F401
 
     _has_langchain = True
 except ImportError:
@@ -46,7 +46,7 @@ except ImportError:
 
 # Import LangChain standard components (retrievers, tools)
 try:
-    from .retrievers import SpiceDBRetriever  # noqa: F401
+    from .retrievers import SpiceDBPreFilterRetriever  # noqa: F401
 
     _has_retrievers = True
 except ImportError:
@@ -61,7 +61,7 @@ except ImportError:
 
 # Import LangGraph components (if available)
 try:
-    from .langgraph_node import create_auth_node, AuthorizationNode, RAGAuthState  # noqa: F401
+    from .langgraph_node import create_check_permissions_node, create_lookup_resources_node, AuthorizationNode, RAGAuthState  # noqa: F401
 
     _has_langgraph = True
 except ImportError:
@@ -71,13 +71,13 @@ except ImportError:
 __all__ = []
 
 if _has_langchain:
-    __all__.extend(["SpiceDBAuthFilter", "SpiceDBAuthLambda"])
+    __all__.extend(["SpiceDBAuthFilter"])
 
 if _has_retrievers:
-    __all__.extend(["SpiceDBRetriever"])
+    __all__.extend(["SpiceDBPreFilterRetriever"])
 
 if _has_tools:
     __all__.extend(["SpiceDBPermissionTool", "SpiceDBBulkPermissionTool"])
 
 if _has_langgraph:
-    __all__.extend(["create_auth_node", "AuthorizationNode", "RAGAuthState"])
+    __all__.extend(["create_check_permissions_node", "create_lookup_resources_node", "AuthorizationNode", "RAGAuthState"])

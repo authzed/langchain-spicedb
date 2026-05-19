@@ -47,7 +47,6 @@ class SpiceDBAuthFilter(Runnable):
         subject_type: str = "user",
         permission: str = "view",
         resource_id_key: str = "resource_id",
-        fail_open: bool = False,
         use_tls: bool = False,
         subject_id: Optional[str] = None,
         return_metrics: bool = False,
@@ -62,7 +61,6 @@ class SpiceDBAuthFilter(Runnable):
             subject_type: SpiceDB subject type (e.g., "user")
             permission: Permission to check (e.g., "view", "edit")
             resource_id_key: Key in document metadata containing resource ID
-            fail_open: If True, allow access on errors
             use_tls: Whether to use TLS for SpiceDB connection
             subject_id: Default subject ID (can be overridden in config)
             return_metrics: If True, return AuthorizationResult instead of just docs
@@ -75,7 +73,6 @@ class SpiceDBAuthFilter(Runnable):
             subject_type=subject_type,
             permission=permission,
             resource_id_key=resource_id_key,
-            fail_open=fail_open,
             use_tls=use_tls,
         )
         self.default_subject_id = subject_id
@@ -163,78 +160,8 @@ class SpiceDBAuthFilter(Runnable):
             subject_type=self.authorizer.subject_type,
             permission=self.authorizer.permission,
             resource_id_key=self.authorizer.resource_id_key,
-            fail_open=self.authorizer.fail_open,
             use_tls=self.authorizer.use_tls,
             subject_id=subject_id or self.default_subject_id,
             return_metrics=self.return_metrics,
         )
         return new_filter
-
-
-class SpiceDBAuthLambda:
-    """
-    Lightweight wrapper for use with RunnableLambda.
-
-    This is useful when you want to use the authorization filter
-    in a RunnableLambda context without the full Runnable interface.
-
-    Example:
-        >>> auth = SpiceDBAuthLambda(
-        ...     spicedb_endpoint="localhost:50051",
-        ...     spicedb_token="sometoken",
-        ...     resource_type="article",
-        ...     subject_id="alice",
-        ... )
-        >>>
-        >>> chain = (
-        ...     RunnableParallel({
-        ...         "context": retriever | RunnableLambda(auth),
-        ...         "question": RunnablePassthrough(),
-        ...     })
-        ...     | prompt
-        ...     | llm
-        ... )
-    """
-
-    def __init__(
-        self,
-        spicedb_endpoint: str = "localhost:50051",
-        spicedb_token: str = "sometoken",
-        resource_type: str = "document",
-        subject_type: str = "user",
-        permission: str = "view",
-        resource_id_key: str = "resource_id",
-        subject_id: str = None,
-        fail_open: bool = False,
-    ):
-        """Initialize the authorization lambda."""
-        self.authorizer = SpiceDBAuthorizer(
-            spicedb_endpoint=spicedb_endpoint,
-            spicedb_token=spicedb_token,
-            resource_type=resource_type,
-            subject_type=subject_type,
-            permission=permission,
-            resource_id_key=resource_id_key,
-            fail_open=fail_open,
-        )
-        self.subject_id = subject_id
-
-    async def __call__(self, documents: List[Document]) -> List[Document]:
-        """
-        Filter documents based on SpiceDB permissions.
-
-        Args:
-            documents: List of documents to filter
-
-        Returns:
-            List of authorized documents
-        """
-        if not self.subject_id:
-            raise ValueError("subject_id must be set")
-
-        result = await self.authorizer.filter_documents(
-            documents=documents,
-            subject_id=self.subject_id,
-        )
-
-        return result.authorized_documents

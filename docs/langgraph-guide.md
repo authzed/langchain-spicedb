@@ -16,7 +16,7 @@ Add an authorization node to your LangGraph state machine:
 
 ```python
 from langgraph.graph import StateGraph, END
-from langchain_spicedb import create_auth_node, RAGAuthState
+from langchain_spicedb import create_check_permissions_node, RAGAuthState
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 
@@ -45,7 +45,7 @@ def generate_node(state):
 
 # Add nodes
 graph.add_node("retrieve", retrieve_node)
-graph.add_node("authorize", create_auth_node(
+graph.add_node("authorize", create_check_permissions_node(
     spicedb_endpoint="localhost:50051",
     spicedb_token="sometoken",
     resource_type="article",
@@ -75,13 +75,13 @@ The library provides three approaches for LangGraph integration, each suited for
 
 ### Option 1: Basic Usage (Recommended for Getting Started)
 
-Use the provided `RAGAuthState` and `create_auth_node()` function. This is the **simplest approach** for basic RAG pipelines.
+Use the provided `RAGAuthState` and `create_check_permissions_node()` function. This is the **simplest approach** for basic RAG pipelines.
 
 ```python
-from langchain_spicedb import create_auth_node, RAGAuthState
+from langchain_spicedb import create_check_permissions_node, RAGAuthState
 
 graph = StateGraph(RAGAuthState)
-graph.add_node("authorize", create_auth_node(...))
+graph.add_node("authorize", create_check_permissions_node(...))
 ```
 
 **When to use:** Simple RAG workflows with standard state fields.
@@ -236,13 +236,13 @@ When teaching or debugging, you can prove the authorization node exists in the g
 
 ```python
 from langgraph.graph import StateGraph, END
-from langchain_spicedb import create_auth_node, RAGAuthState
+from langchain_spicedb import create_check_permissions_node, RAGAuthState
 
 graph = StateGraph(RAGAuthState)
 
 # Add nodes
 graph.add_node("retrieve", retrieve_node)
-graph.add_node("authorize", create_auth_node(...))
+graph.add_node("authorize", create_check_permissions_node(...))
 graph.add_node("generate", generate_node)
 
 # Add edges
@@ -306,7 +306,7 @@ The authorization node automatically adds metrics to the state under the `auth_r
 
 ### Complete Visualization Example
 
-See `examples/langgraph_visualization_example.py` for a complete demonstration with 7 different methods to prove and visualize the authorization node.
+See `examples/langgraph_postfilter_example.py` for a complete working example of a post-filter authorization graph with inspection and metrics.
 
 ## Advanced Patterns
 
@@ -322,7 +322,7 @@ def should_authorize(state):
     return "authorize"
 
 graph.add_conditional_edges("retrieve", should_authorize)
-graph.add_node("authorize", create_auth_node(...))
+graph.add_node("authorize", create_check_permissions_node(...))
 ```
 
 ### Pattern: Fallback on Denial
@@ -347,10 +347,10 @@ Check permissions at multiple stages:
 
 ```python
 # Stage 1: Coarse-grained check (fast)
-graph.add_node("pre_auth", create_auth_node(permission="view"))
+graph.add_node("pre_auth", create_check_permissions_node(permission="view"))
 
 # Stage 2: Fine-grained check (detailed)
-graph.add_node("fine_auth", create_auth_node(permission="read_sensitive"))
+graph.add_node("fine_auth", create_check_permissions_node(permission="read_sensitive"))
 
 graph.add_edge("retrieve", "pre_auth")
 graph.add_edge("pre_auth", "fine_auth")

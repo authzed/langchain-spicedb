@@ -15,6 +15,7 @@ from authzed.api.v1 import (
     CheckPermissionResponse,
     CheckBulkPermissionsRequest,
     CheckBulkPermissionsRequestItem,
+    LookupResourcesRequest,
     ObjectReference,
     SubjectReference,
 )
@@ -78,7 +79,6 @@ class SpiceDBAuthorizer:
         subject_type: str = "user",
         permission: str = "view",
         resource_id_key: str = "resource_id",
-        fail_open: bool = False,
         use_tls: bool = False,
     ):
         """
@@ -91,7 +91,6 @@ class SpiceDBAuthorizer:
             subject_type: SpiceDB subject type (e.g., "user", "service")
             permission: Permission to check (e.g., "view", "edit")
             resource_id_key: Key in document metadata containing resource ID
-            fail_open: If True, allow access on errors; if False, deny on errors
             use_tls: Whether to use TLS for SpiceDB connection
         """
         self.spicedb_endpoint = spicedb_endpoint
@@ -100,13 +99,10 @@ class SpiceDBAuthorizer:
         self.subject_type = subject_type
         self.permission = permission
         self.resource_id_key = resource_id_key
-        self.fail_open = fail_open
         self.use_tls = use_tls
 
-        # Initialize SpiceDB client
         if use_tls:
             from grpcutil import bearer_token_credentials
-
             credentials = bearer_token_credentials(spicedb_token)
         else:
             credentials = insecure_bearer_token_credentials(spicedb_token)
@@ -221,30 +217,72 @@ class SpiceDBAuthorizer:
         resource_type = resource_type or self.resource_type
         permission = permission or self.permission
 
-        try:
-            # Await the async gRPC call
-            response = await self.client.CheckPermission(
-                CheckPermissionRequest(
-                    resource=ObjectReference(
-                        object_type=resource_type,
-                        object_id=str(resource_id),
+        response = await self.client.CheckPermission(
+            CheckPermissionRequest(
+                resource=ObjectReference(
+                    object_type=resource_type,
+                    object_id=str(resource_id),
+                ),
+                permission=permission,
+                subject=SubjectReference(
+                    object=ObjectReference(
+                        object_type=subject_type,
+                        object_id=subject_id,
                     ),
-                    permission=permission,
-                    subject=SubjectReference(
-                        object=ObjectReference(
-                            object_type=subject_type,
-                            object_id=subject_id,
-                        ),
-                    ),
-                )
+                ),
             )
+        )
 
-            return response.permissionship == CheckPermissionResponse.PERMISSIONSHIP_HAS_PERMISSION
+        return response.permissionship == CheckPermissionResponse.PERMISSIONSHIP_HAS_PERMISSION
 
-        except Exception:
-            if self.fail_open:
-                return True
-            return False
+    async def lookup_resources(
+        self,
+        subject_id: str,
+        subject_type: Optional[str] = None,
+        resource_type: Optional[str] = None,
+        permission: Optional[str] = None,
+    ) -> List[str]:
+        """
+        Look up all resources a subject has permission to access.
+
+        Uses SpiceDB's LookupResources streaming API to return all resource
+        IDs the subject is authorized to access. Results can be used to
+        pre-filter a vector store search.
+
+        Args:
+            subject_id: ID of the subject (user)
+            subject_type: Override default subject type
+            resource_type: Override default resource type
+            permission: Override default permission
+
+        Returns:
+            List of authorized resource IDs. Empty list means no access.
+
+        Raises:
+            Exception: Propagates any SpiceDB communication errors to the caller.
+        """
+        subject_type = subject_type or self.subject_type
+        resource_type = resource_type or self.resource_type
+        permission = permission or self.permission
+
+        resp = self.client.LookupResources(
+            LookupResourcesRequest(
+                subject=SubjectReference(
+                    object=ObjectReference(
+                        object_type=subject_type,
+                        object_id=subject_id,
+                    )
+                ),
+                permission=permission,
+                resource_object_type=resource_type,
+            )
+        )
+
+        authorized_ids = []
+        async for response in resp:
+            authorized_ids.append(response.resource_object_id)
+
+        return authorized_ids
 
     async def _batch_check_permissions(
         self,
@@ -274,47 +312,36 @@ class SpiceDBAuthorizer:
         if not resource_ids:
             return []
 
-        try:
-            # Create bulk permission check items
-            items = [
-                CheckBulkPermissionsRequestItem(
-                    resource=ObjectReference(
-                        object_type=resource_type,
-                        object_id=str(resource_id),
+        items = [
+            CheckBulkPermissionsRequestItem(
+                resource=ObjectReference(
+                    object_type=resource_type,
+                    object_id=str(resource_id),
+                ),
+                permission=permission,
+                subject=SubjectReference(
+                    object=ObjectReference(
+                        object_type=subject_type,
+                        object_id=subject_id,
                     ),
-                    permission=permission,
-                    subject=SubjectReference(
-                        object=ObjectReference(
-                            object_type=subject_type,
-                            object_id=subject_id,
-                        ),
-                    ),
-                )
-                for resource_id in resource_ids
-            ]
-
-            # Make single bulk permission check request (await async gRPC call)
-            response = await self.client.CheckBulkPermissions(
-                CheckBulkPermissionsRequest(items=items)
+                ),
             )
+            for resource_id in resource_ids
+        ]
 
-            # Extract authorized resource IDs from response
-            authorized_ids = []
-            for i, pair in enumerate(response.pairs):
-                if (
-                    pair.item.permissionship
-                    == CheckPermissionResponse.PERMISSIONSHIP_HAS_PERMISSION
-                ):
-                    authorized_ids.append(resource_ids[i])
+        response = await self.client.CheckBulkPermissions(
+            CheckBulkPermissionsRequest(items=items)
+        )
 
-            return authorized_ids
+        authorized_ids = []
+        for i, pair in enumerate(response.pairs):
+            if (
+                pair.item.permissionship
+                == CheckPermissionResponse.PERMISSIONSHIP_HAS_PERMISSION
+            ):
+                authorized_ids.append(resource_ids[i])
 
-        except Exception:
-            # Fail-open: return all IDs if configured to do so
-            if self.fail_open:
-                return resource_ids
-            # Fail-closed: return empty list on error
-            return []
+        return authorized_ids
 
     def _get_resource_id(self, doc: Any) -> Optional[str]:
         """

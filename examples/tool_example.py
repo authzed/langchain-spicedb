@@ -15,10 +15,55 @@ import os
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain.agents import create_agent
+from authzed.api.v1 import Client, WriteSchemaRequest, WriteRelationshipsRequest, RelationshipUpdate, Relationship, SubjectReference, ObjectReference
+from grpcutil import insecure_bearer_token_credentials, bearer_token_credentials
 
 from langchain_spicedb import SpiceDBPermissionTool, SpiceDBBulkPermissionTool
 
 load_dotenv()
+
+SCHEMA = """
+definition user {}
+
+definition article {
+    relation viewer: user
+    relation editor: user
+    relation deleter: user
+    permission view = viewer + editor + deleter
+    permission edit = editor + deleter
+    permission delete = deleter
+}
+"""
+
+RELATIONSHIPS = [
+    ("article", "123", "viewer", "user", "tim"),
+    ("article", "123", "viewer", "user", "alice"),
+    ("article", "456", "editor", "user", "alice"),
+    ("article", "456", "deleter", "user", "tim"),
+    ("article", "789", "viewer", "user", "alice"),
+    ("article", "101", "viewer", "user", "alice"),
+]
+
+
+async def setup_spicedb(endpoint: str, token: str, use_tls: bool = False):
+    """Write schema and seed relationships so the example is self-contained."""
+    creds = bearer_token_credentials(token) if use_tls else insecure_bearer_token_credentials(token)
+    client = Client(endpoint, creds)
+    await client.WriteSchema(WriteSchemaRequest(schema=SCHEMA))
+
+    updates = []
+    for res_type, res_id, relation, sub_type, sub_id in RELATIONSHIPS:
+        updates.append(RelationshipUpdate(
+            operation=RelationshipUpdate.OPERATION_TOUCH,
+            relationship=Relationship(
+                resource=ObjectReference(object_type=res_type, object_id=res_id),
+                relation=relation,
+                subject=SubjectReference(object=ObjectReference(object_type=sub_type, object_id=sub_id)),
+            ),
+        ))
+    await client.WriteRelationships(WriteRelationshipsRequest(updates=updates))
+    print("✓ SpiceDB schema and relationships written")
+    print()
 
 
 async def main():
@@ -30,12 +75,15 @@ async def main():
     # Configuration
     spicedb_endpoint = os.getenv("SPICEDB_ENDPOINT", "localhost:50051")
     spicedb_token = os.getenv("SPICEDB_TOKEN", "somerandomkeyhere")
+    use_tls = os.getenv("SPICEDB_TLS", "false").lower() == "true"
 
     print("Configuration:")
     print(f"  SpiceDB Endpoint: {spicedb_endpoint}")
     print("  Resource Type: article")
     print("  Subject Type: user")
     print()
+
+    await setup_spicedb(spicedb_endpoint, spicedb_token, use_tls)
 
     # Create SpiceDB permission checking tools
     permission_tool = SpiceDBPermissionTool(
@@ -87,7 +135,7 @@ Available permissions: view, edit, delete
     print()
 
     result = await agent.ainvoke(
-        {"messages": [{"role": "user", "content": "Can user tim view article 123?"}]}
+        {"messages": [{"role": "user", "content": "Can user alice view article 123?"}]}
     )
     print(f"\nAgent Response:\n{result['messages'][-1].content}")
     print()
@@ -104,7 +152,7 @@ Available permissions: view, edit, delete
             "messages": [
                 {
                     "role": "user",
-                    "content": "Which of these articles can user tim view: 123, 456, 789?",
+                    "content": "Which of these articles can user alice view: 123, 456, 789?",
                 }
             ]
         }
@@ -120,7 +168,7 @@ Available permissions: view, edit, delete
     print()
 
     result = await agent.ainvoke(
-        {"messages": [{"role": "user", "content": "Can user alice edit article 123?"}]}
+        {"messages": [{"role": "user", "content": "Can user alice edit article 101?"}]}
     )
     print(f"\nAgent Response:\n{result['messages'][-1].content}")
     print()
@@ -270,13 +318,9 @@ if __name__ == "__main__":
     print("Prerequisites:")
     print("1. SpiceDB running on localhost:50051 (or set SPICEDB_ENDPOINT)")
     print("2. Set SPICEDB_TOKEN environment variable")
-    print("3. SpiceDB schema configured with 'article' resource type")
-    print(
-        "4. Test relationships created (e.g., zed relationship create article:123 viewer user:tim)"
-    )
+    print("3. Set OPENAI_API_KEY environment variable (for agent examples)")
     print()
-    print("For agent examples:")
-    print("5. Set OPENAI_API_KEY environment variable")
+    print("Schema and test data are written automatically at startup.")
     print()
     print("=" * 80)
     print()
@@ -289,5 +333,5 @@ if __name__ == "__main__":
         print()
 
     # These examples work without OpenAI
-    asyncio.run(direct_tool_usage())
-    asyncio.run(multi_permission_workflow())
+    # asyncio.run(direct_tool_usage())
+    # asyncio.run(multi_permission_workflow())

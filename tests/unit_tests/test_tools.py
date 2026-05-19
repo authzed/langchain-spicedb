@@ -160,7 +160,6 @@ class TestSpiceDBPermissionToolUnit:
             spicedb_token="custom_token",
             subject_type="service",
             resource_type="document",
-            fail_open=True,
             use_tls=True,
         )
 

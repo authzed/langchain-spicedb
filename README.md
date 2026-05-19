@@ -8,7 +8,8 @@ This package follows [LangChain's official integration guidelines](https://pytho
 
 - **LangChain & LangGraph Integration**: First-class support for modern LLM frameworks
 - **Vector Store Agnostic**: Compatible with Pinecone, FAISS, Weaviate, Chroma, and more
-- **Post-Filter Authorization**: Filters retrieved documents based on SpiceDB permissions
+- **Post-Filter Authorization**: Retrieve semantically, then filter by SpiceDB permissions
+- **Pre-Filter Authorization**: Fetch authorized resource IDs via LookupResources first, then run a filtered vector store search — ideal when users have access to a small fraction of a large corpus
 - **Efficient Bulk Permissions**: Uses SpiceDB's native bulk API for optimal performance
 - **Observable**: Returns detailed metrics about authorization decisions
 - **Type-Safe**: Full type hints for better IDE support
@@ -19,75 +20,76 @@ This package follows [LangChain's official integration guidelines](https://pytho
 Most RAG pipelines retrieve documents without considering user permissions. This package solves that by:
 
 1. **Post-retrieval filtering**: Retrieve best semantic matches first, then filter by permissions
-2. **Deterministic authorization**: Every document is checked against SpiceDB before being used
-3. **Framework integration**: Native LangChain and LangGraph components for seamless integration
-4. **Vector store agnostic**: Not tied to any specific vector database
+2. **Pre-retrieval filtering**: Fetch all resource IDs the user can access via SpiceDB's `LookupResources` API, then run a filtered vector store search — no unauthorized documents are retrieved
+3. **Deterministic authorization**: Every document is checked against SpiceDB before being used
+4. **Framework integration**: Native LangChain and LangGraph components for seamless integration
+5. **Vector store agnostic**: Not tied to any specific vector database
 
 ## Which Component Should I Use?
 
-Choose the right component based on your use case:
-
-| Component | Use Case | Best For |
-|-----------|----------|----------|
-| **SpiceDBRetriever** | Simple RAG pipelines | Drop-in replacement for any retriever. Wraps your existing retriever with authorization. |
-| **SpiceDBAuthFilter** | LangChain chains with middleware | Filtering documents in the middle of a chain. Reusable across different users via `config`. |
-| **create_auth_node** | LangGraph workflows | Complex multi-step workflows with state management. Provides authorization metrics in state. |
-| **SpiceDBPermissionTool** | Agentic workflows | Give agents the ability to check permissions before taking actions. |
-| **SpiceDBBulkPermissionTool** | Agentic workflows (batch) | Same as above but for checking multiple resources at once. |
+| Component | Pattern | Use Case |
+|-----------|---------|----------|
+| **SpiceDBAuthFilter** | Post-filter | LangChain LCEL chains. Reusable across different users via `config`. |
+| **SpiceDBPreFilterRetriever** | Pre-filter | LangChain LCEL chains. Users have access to a small fraction of a large corpus. Requires a `filter_factory` matching your vector store's filter syntax. |
+| **create_check_permissions_node** | Post-filter | LangGraph workflows. Multi-step workflows with state management and authorization metrics. |
+| **create_lookup_resources_node** | Pre-filter | LangGraph workflows. Single node that calls LookupResources then runs a filtered vector search. No separate retrieval step needed. |
+| **SpiceDBPermissionTool** | Check | Agents that need to check a single permission before acting. |
+| **SpiceDBBulkPermissionTool** | Check | Agents that need to check permissions on multiple resources at once. |
 
 ### Quick Decision Guide
 
-**Use SpiceDBRetriever if:**
-- You have a simple RAG pipeline
-- You always use the same user per retriever instance and you don't need to reuse the retriever across different users
+**Post-filter vs Pre-filter:**
+- Use **post-filter** (`SpiceDBAuthFilter`, `create_check_permissions_node`) when users have access to most documents — semantic search quality is highest because all documents are candidates.
+- Use **pre-filter** (`SpiceDBPreFilterRetriever`, `create_lookup_resources_node`) when users have access to a small subset of a large corpus — avoids retrieving unauthorized content entirely.
 
-**Use SpiceDBAuthFilter if:**
-- You're building LangChain LCEL chains
-- You want to reuse the same chain for multiple users
-- You need to pass user context at runtime via `config`
-
-**Use create_auth_node if:**
-- You're using LangGraph for complex workflows
-- You need state management and observability
-- You're building multi-step agentic workflows
-
-**Use SpiceDBPermissionTool / SpiceDBBulkPermissionTool if:**
-- You're building agents with LangChain
-- Your agent needs to check permissions as part of its decision-making and you want agents to explain why actions are allowed or denied
-- You're implementing permission-aware automation
+**LangChain vs LangGraph:**
+- Use **LangChain** components (`SpiceDBAuthFilter`, `SpiceDBPreFilterRetriever`) for LCEL chains.
+- Use **LangGraph** components (`create_check_permissions_node`, `create_lookup_resources_node`) for state graph workflows.
 
 ### Example: Same Pipeline, Different Patterns
 
-**Pattern 1: SpiceDBRetriever (simplest)**
+**Pattern 1: SpiceDBAuthFilter (post-filter, LCEL)**
 ```python
-retriever = SpiceDBRetriever(
-    base_retriever=vectorstore.as_retriever(),
-    subject_id="alice",  # Fixed user
+auth = SpiceDBAuthFilter(...)
+chain = retriever | auth | prompt | llm
+
+# Same chain, different users at call time
+await chain.ainvoke("question", config={"configurable": {"subject_id": "alice"}})
+await chain.ainvoke("question", config={"configurable": {"subject_id": "bob"}})
+```
+
+**Pattern 2: SpiceDBPreFilterRetriever (pre-filter, LCEL)**
+```python
+retriever = SpiceDBPreFilterRetriever(
+    vector_store=vector_store,
+    filter_factory=lambda ids: {"filter": {"article_id": {"$in": ids}}},
+    subject_id="alice",
     ...
 )
 chain = retriever | prompt | llm
 ```
 
-**Pattern 2: SpiceDBAuthFilter (reusable)**
+**Pattern 3: create_check_permissions_node (post-filter, LangGraph)**
 ```python
-auth = SpiceDBAuthFilter(...)
-chain = retriever | auth | prompt | llm
-
-# Same chain, different users
-await chain.ainvoke("question", config={"configurable": {"subject_id": "alice"}})
-await chain.ainvoke("question", config={"configurable": {"subject_id": "bob"}})
-```
-
-**Pattern 3: LangGraph Node (stateful)**
-```python
-graph.add_node("authorize", create_auth_node(...))
+graph.add_node("authorize", create_check_permissions_node(...))
 # Authorization metrics available in state['auth_results']
 ```
 
-**Pattern 4: Agent Tool (agentic)**
+**Pattern 4: create_lookup_resources_node (pre-filter, LangGraph)**
+```python
+# Single node replaces separate retrieve + authorize nodes
+graph.add_node("retrieve_authorized", create_lookup_resources_node(
+    vector_store=vector_store,
+    filter_factory=lambda ids: {"filter": {"article_id": {"$in": ids}}},
+    ...
+))
+graph.add_edge("retrieve_authorized", "generate")
+```
+
+**Pattern 5: Agent Tool**
 ```python
 tools = [SpiceDBPermissionTool(...)]
-agent = create_agent(llm, tools, system_prompt="You are a helpful assistant.")
+agent = create_agent(llm, tools, system_prompt="...")
 # Agent can check "Can user alice delete document 123?" and explain the result
 ```
 
@@ -155,7 +157,6 @@ from langchain_spicedb import SpiceDBAuthFilter
 from langchain_core.runnables import RunnableParallel, RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 
-# Initialize auth filter
 auth = SpiceDBAuthFilter(
     spicedb_endpoint="localhost:50051",
     spicedb_token="sometoken",
@@ -165,10 +166,9 @@ auth = SpiceDBAuthFilter(
     permission="view",
 )
 
-# Build chain once
 chain = (
     RunnableParallel({
-        "context": retriever | auth,  # Authorization happens here
+        "context": retriever | auth,
         "question": RunnablePassthrough(),
     })
     | prompt
@@ -176,7 +176,6 @@ chain = (
     | StrOutputParser()
 )
 
-# Pass user at runtime - reuse same chain for different users
 answer = await chain.ainvoke(
     "Your question?",
     config={"configurable": {"subject_id": "alice"}}
@@ -187,13 +186,12 @@ answer = await chain.ainvoke(
 
 ```python
 from langgraph.graph import StateGraph, END
-from langchain_spicedb import create_auth_node, RAGAuthState
+from langchain_spicedb import create_check_permissions_node, RAGAuthState
 
 graph = StateGraph(RAGAuthState)
 
-# Add nodes
 graph.add_node("retrieve", retrieve_node)
-graph.add_node("authorize", create_auth_node(
+graph.add_node("authorize", create_check_permissions_node(
     spicedb_endpoint="localhost:50051",
     spicedb_token="sometoken",
     resource_type="article",
@@ -201,13 +199,11 @@ graph.add_node("authorize", create_auth_node(
 ))
 graph.add_node("generate", generate_node)
 
-# Wire it up
 graph.set_entry_point("retrieve")
 graph.add_edge("retrieve", "authorize")
 graph.add_edge("authorize", "generate")
 graph.add_edge("generate", END)
 
-# Run
 app = graph.compile()
 result = await app.ainvoke({
     "question": "What is SpiceDB?",
@@ -224,28 +220,51 @@ result = await app.ainvoke({
 
 ## Components
 
-### SpiceDBRetriever
+### SpiceDBAuthFilter
 
-Wraps any LangChain retriever with SpiceDB authorization:
+Post-filter authorization as a LangChain `Runnable`. Sits between a retriever and the rest of the chain, filtering documents based on SpiceDB permissions. Reusable across users via `config`:
 
 ```python
-from langchain_spicedb import SpiceDBRetriever
+from langchain_spicedb import SpiceDBAuthFilter
 
-retriever = SpiceDBRetriever(
-    base_retriever=vector_store.as_retriever(),
+auth = SpiceDBAuthFilter(
+    spicedb_endpoint="localhost:50051",
+    spicedb_token="sometoken",
+    resource_type="article",
+    subject_type="user",
+    resource_id_key="article_id",
+    permission="view",
+)
+
+authorized_docs = await auth.ainvoke(
+    docs,
+    config={"configurable": {"subject_id": "alice"}}
+)
+```
+
+### SpiceDBPreFilterRetriever
+
+Pre-filter authorization as a LangChain `BaseRetriever`. Calls SpiceDB's `LookupResources` to get the user's authorized IDs, then runs a filtered vector search:
+
+```python
+from langchain_spicedb import SpiceDBPreFilterRetriever
+
+retriever = SpiceDBPreFilterRetriever(
+    vector_store=vector_store,
+    filter_factory=lambda ids: {"filter": {"article_id": {"$in": ids}}},
     subject_id="alice",
     spicedb_endpoint="localhost:50051",
     spicedb_token="sometoken",
     resource_type="article",
-    resource_id_key="article_id",
+    permission="view",
 )
 
-docs = await retriever.ainvoke("query")
+docs = await retriever.ainvoke("What is Python?")
 ```
 
 ### SpiceDBPermissionTool
 
-LangChain tool for agents to check permissions:
+LangChain tool for agents to check a single permission:
 
 ```python
 from langchain_spicedb import SpiceDBPermissionTool
@@ -267,7 +286,7 @@ result = tool.invoke({
 
 ### SpiceDBBulkPermissionTool
 
-Same as `SpiceDBPermissionTool` but check permissions for multiple resources at once:
+Same as `SpiceDBPermissionTool` but checks multiple resources at once:
 
 ```python
 from langchain_spicedb import SpiceDBBulkPermissionTool

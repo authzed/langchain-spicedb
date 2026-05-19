@@ -14,7 +14,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableParallel, RunnablePassthrough, RunnableLambda
 from langchain_openai import ChatOpenAI
 
-from langchain_spicedb import SpiceDBAuthLambda
+from langchain_spicedb import SpiceDBAuthFilter
 
 load_dotenv()
 
@@ -59,15 +59,13 @@ async def main():
     llm = ChatOpenAI(api_key=os.getenv("OPENAI_API_KEY"), model="gpt-4o-mini", temperature=0)
 
     # Initialize SpiceDB authorization filter
-    # Note: We're using SpiceDBAuthLambda for use with RunnableLambda
-    auth_filter = SpiceDBAuthLambda(
+    auth_filter = SpiceDBAuthFilter(
         spicedb_endpoint=spicedb_endpoint,
         spicedb_token=spicedb_token,
         resource_type="article",
         subject_type="user",
         permission="view",
         resource_id_key="article_id",
-        subject_id=subject_id,
     )
 
     # Create prompt
@@ -85,7 +83,7 @@ async def main():
     chain = (
         RunnableParallel(
             {
-                "context": RunnableLambda(mock_retriever) | RunnableLambda(auth_filter),
+                "context": RunnableLambda(mock_retriever) | auth_filter,
                 "question": RunnablePassthrough(),
             }
         )
@@ -106,7 +104,7 @@ async def main():
         print(f"Query: {query}")
         print("-" * 80)
 
-        answer = await chain.ainvoke(query)
+        answer = await chain.ainvoke(query, config={"configurable": {"subject_id": subject_id}})
         print(f"\nAnswer:\n{answer}")
         print()
 

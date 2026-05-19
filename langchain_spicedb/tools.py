@@ -25,7 +25,6 @@ class SpiceDBAuthTool(BaseTool):
     )
     resource_type: str = Field(default="document", description="SpiceDB resource type")
     subject_type: str = Field(default="user", description="SpiceDB subject type")
-    fail_open: bool = Field(default=False, description="If True, allow access on errors")
     use_tls: bool = Field(default=False, description="Whether to use TLS for SpiceDB connection")
 
     _authorizer: Optional[SpiceDBAuthorizer] = None
@@ -36,7 +35,6 @@ class SpiceDBAuthTool(BaseTool):
         spicedb_token: str = "sometoken",
         resource_type: str = "document",
         subject_type: str = "user",
-        fail_open: bool = False,
         use_tls: bool = False,
         **kwargs: Any,
     ):
@@ -48,7 +46,6 @@ class SpiceDBAuthTool(BaseTool):
             spicedb_token: Pre-shared key for SpiceDB authentication
             resource_type: SpiceDB resource type (e.g., 'document', 'article')
             subject_type: SpiceDB subject type (e.g., 'user')
-            fail_open: If True, allow access on errors
             use_tls: Whether to use TLS for SpiceDB connection
             **kwargs: Additional arguments passed to BaseTool
         """
@@ -58,7 +55,6 @@ class SpiceDBAuthTool(BaseTool):
             spicedb_token=spicedb_token,
             resource_type=resource_type,
             subject_type=subject_type,
-            fail_open=fail_open,
             use_tls=use_tls,
             **kwargs,
         )
@@ -70,7 +66,6 @@ class SpiceDBAuthTool(BaseTool):
             resource_type=self.resource_type,
             subject_type=self.subject_type,
             permission="view",  # Default, can be overridden per call
-            fail_open=self.fail_open,
             use_tls=self.use_tls,
         )
 

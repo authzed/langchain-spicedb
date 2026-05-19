@@ -166,23 +166,6 @@ class TestSpiceDBPermissionToolIntegration:
             result = tool._run(subject_id="tim", resource_id="123", permission="view")
             assert result in ["true", "false"]
 
-    @pytest.mark.skipif(
-        not os.getenv("SPICEDB_ENDPOINT"),
-        reason="SPICEDB_ENDPOINT not set - skipping integration test",
-    )
-    def test_tool_with_fail_open(self, spicedb_config):
-        """Test tool with fail_open=True."""
-        tool = SpiceDBPermissionTool(
-            subject_type="user",
-            resource_type="article",
-            fail_open=True,
-            **spicedb_config,
-        )
-
-        # Should not raise errors even if SpiceDB has issues
-        result = tool._run(subject_id="tim", resource_id="123", permission="view")
-        assert result in ["true", "false"]
-
 
 class TestSpiceDBBulkPermissionToolIntegration:
     """Integration tests for SpiceDBBulkPermissionTool with real SpiceDB."""
@@ -348,20 +331,3 @@ class TestSpiceDBBulkPermissionToolIntegration:
 
             result = tool._run(subject_id="tim", resource_ids="123,456", permission="view")
             assert isinstance(result, str)
-
-    @pytest.mark.skipif(
-        not os.getenv("SPICEDB_ENDPOINT"),
-        reason="SPICEDB_ENDPOINT not set - skipping integration test",
-    )
-    def test_bulk_tool_with_fail_open(self, spicedb_config):
-        """Test bulk tool with fail_open=True."""
-        tool = SpiceDBBulkPermissionTool(
-            subject_type="user",
-            resource_type="article",
-            fail_open=True,
-            **spicedb_config,
-        )
-
-        # Should not raise errors even if SpiceDB has issues
-        result = tool._run(subject_id="tim", resource_ids="123,456", permission="view")
-        assert isinstance(result, str)

@@ -21,10 +21,10 @@ Example (LangChain):
     >>> chain = retriever | auth.with_config(subject_id="alice") | prompt | llm
 
 Example (LangGraph):
-    >>> from langchain_spicedb import create_auth_node
+    >>> from langchain_spicedb import create_check_permissions_node
     >>>
     >>> graph = StateGraph(MyState)
-    >>> graph.add_node("authorize", create_auth_node(
+    >>> graph.add_node("authorize", create_check_permissions_node(
     ...     spicedb_endpoint="localhost:50051",
     ...     spicedb_token="sometoken",
     ...     subject_type="user",
@@ -61,7 +61,7 @@ except ImportError:
 
 # Import LangGraph components (if available)
 try:
-    from .langgraph_node import create_auth_node, create_pre_filter_auth_node, AuthorizationNode, RAGAuthState  # noqa: F401
+    from .langgraph_node import create_check_permissions_node, create_lookup_resources_node, AuthorizationNode, RAGAuthState  # noqa: F401
 
     _has_langgraph = True
 except ImportError:
@@ -80,4 +80,4 @@ if _has_tools:
     __all__.extend(["SpiceDBPermissionTool", "SpiceDBBulkPermissionTool"])
 
 if _has_langgraph:
-    __all__.extend(["create_auth_node", "create_pre_filter_auth_node", "AuthorizationNode", "RAGAuthState"])
+    __all__.extend(["create_check_permissions_node", "create_lookup_resources_node", "AuthorizationNode", "RAGAuthState"])

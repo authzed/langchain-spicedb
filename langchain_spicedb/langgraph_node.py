@@ -45,7 +45,7 @@ class RAGAuthState(TypedDict, total=False):
     answer: str
 
 
-def create_auth_node(
+def create_check_permissions_node(
     spicedb_endpoint: str = "localhost:50051",
     spicedb_token: str = "sometoken",
     resource_type: str = "document",
@@ -74,10 +74,10 @@ def create_auth_node(
 
     Example:
         >>> from langgraph.graph import StateGraph
-        >>> from spicedb_rag_auth.langgraph import create_auth_node
+        >>> from spicedb_rag_auth.langgraph import create_check_permissions_node
         >>>
         >>> graph = StateGraph(MyState)
-        >>> graph.add_node("authorize", create_auth_node(
+        >>> graph.add_node("authorize", create_check_permissions_node(
         ...     spicedb_endpoint="localhost:50051",
         ...     spicedb_token="sometoken",
         ...     resource_type="article",
@@ -248,7 +248,7 @@ class AuthorizationNode:
         }
 
 
-def create_pre_filter_auth_node(
+def create_lookup_resources_node(
     vector_store: Any,
     filter_factory: Callable[[List[str]], Dict[str, Any]],
     spicedb_endpoint: str = "localhost:50051",
@@ -262,7 +262,7 @@ def create_pre_filter_auth_node(
     """
     Create a LangGraph node for pre-filter authorization via LookupResources.
 
-    Unlike create_auth_node (which post-filters after a separate retrieval step),
+    Unlike create_check_permissions_node (which post-filters after a separate retrieval step),
     this node performs retrieval and authorization in one step: it calls SpiceDB's
     LookupResources first, then runs a filtered vector store search so no
     unauthorized documents are ever fetched.
@@ -292,7 +292,7 @@ def create_pre_filter_auth_node(
         - authorized_documents: Documents the subject is authorized to see
 
     Example:
-        >>> graph.add_node("retrieve_authorized", create_pre_filter_auth_node(
+        >>> graph.add_node("retrieve_authorized", create_lookup_resources_node(
         ...     vector_store=vector_store,
         ...     filter_factory=lambda ids: {"filter": {"article_id": {"$in": ids}}},
         ...     spicedb_endpoint="localhost:50051",

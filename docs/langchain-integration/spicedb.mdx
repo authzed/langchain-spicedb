@@ -150,7 +150,7 @@ The package provides several components for different integration patterns:
 
 ### LangGraph nodes
 
-- **create_auth_node()**: Factory function to create authorization nodes
+- **create_check_permissions_node()**: Factory function to create authorization nodes
 - **AuthorizationNode**: Reusable class-based node for authorization
 - **RAGAuthState**: TypedDict for LangGraph state with authorization fields
 
@@ -236,7 +236,7 @@ answer = await chain.ainvoke(
 
 ```python
 from langgraph.graph import StateGraph, END
-from langchain_spicedb import create_auth_node, RAGAuthState
+from langchain_spicedb import create_check_permissions_node, RAGAuthState
 
 # Define your nodes
 def retrieve_node(state):
@@ -256,7 +256,7 @@ def generate_node(state):
 # Build graph
 graph = StateGraph(RAGAuthState)
 graph.add_node("retrieve", retrieve_node)
-graph.add_node("authorize", create_auth_node(
+graph.add_node("authorize", create_check_permissions_node(
     spicedb_endpoint="localhost:50051",
     spicedb_token="sometoken",
     resource_type="article",

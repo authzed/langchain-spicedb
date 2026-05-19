@@ -135,7 +135,7 @@ async def main():
         | StrOutputParser()
     )
 
-    query = "Tell me about SpiceDB"
+    query = "Tell me about Python"
     print(f"Query: {query}")
     print("-" * 40)
 

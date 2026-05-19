@@ -19,7 +19,7 @@ from authzed.api.v1 import (
 )
 from grpcutil import insecure_bearer_token_credentials, bearer_token_credentials
 
-from langchain_spicedb import create_auth_node, RAGAuthState
+from langchain_spicedb import create_check_permissions_node, RAGAuthState
 
 load_dotenv()
 
@@ -140,7 +140,7 @@ async def main():
     graph.add_node("retrieve", retrieve_node)
     graph.add_node(
         "authorize",
-        create_auth_node(
+        create_check_permissions_node(
             spicedb_endpoint=spicedb_endpoint,
             spicedb_token=spicedb_token,
             resource_type="article",

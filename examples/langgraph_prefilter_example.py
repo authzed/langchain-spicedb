@@ -1,7 +1,7 @@
 """
 LangGraph Pre-filter Authorization Example
 
-This example builds a LangGraph workflow using create_pre_filter_auth_node.
+This example builds a LangGraph workflow using create_lookup_resources_node.
 Unlike the post-filter pattern (retrieve → authorize → generate), the pre-filter
 node combines retrieval and authorization into a single step:
 
@@ -27,7 +27,7 @@ from authzed.api.v1 import (
 )
 from grpcutil import insecure_bearer_token_credentials, bearer_token_credentials
 
-from langchain_spicedb import create_pre_filter_auth_node, RAGAuthState
+from langchain_spicedb import create_lookup_resources_node, RAGAuthState
 
 load_dotenv()
 
@@ -185,7 +185,7 @@ async def main():
     # retrieve_authorized replaces both retrieve + authorize from the post-filter pattern
     graph.add_node(
         "retrieve_authorized",
-        create_pre_filter_auth_node(
+        create_lookup_resources_node(
             vector_store=vector_store,
             filter_factory=lambda ids: {"filter": {"article_id": {"$in": ids}}},
             spicedb_endpoint=spicedb_endpoint,
@@ -251,7 +251,7 @@ async def main():
 
     result = await app.ainvoke(
         {
-            "question": "What is Python?",
+            "question": "What is JS?",
             "subject_id": subject_id,
         }
     )

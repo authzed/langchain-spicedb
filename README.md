@@ -31,20 +31,20 @@ Most RAG pipelines retrieve documents without considering user permissions. This
 |-----------|---------|----------|
 | **SpiceDBAuthFilter** | Post-filter | LangChain LCEL chains. Reusable across different users via `config`. |
 | **SpiceDBPreFilterRetriever** | Pre-filter | LangChain LCEL chains. Users have access to a small fraction of a large corpus. Requires a `filter_factory` matching your vector store's filter syntax. |
-| **create_auth_node** | Post-filter | LangGraph workflows. Multi-step workflows with state management and authorization metrics. |
-| **create_pre_filter_auth_node** | Pre-filter | LangGraph workflows. Single node that calls LookupResources then runs a filtered vector search. No separate retrieval step needed. |
+| **create_check_permissions_node** | Post-filter | LangGraph workflows. Multi-step workflows with state management and authorization metrics. |
+| **create_lookup_resources_node** | Pre-filter | LangGraph workflows. Single node that calls LookupResources then runs a filtered vector search. No separate retrieval step needed. |
 | **SpiceDBPermissionTool** | Check | Agents that need to check a single permission before acting. |
 | **SpiceDBBulkPermissionTool** | Check | Agents that need to check permissions on multiple resources at once. |
 
 ### Quick Decision Guide
 
 **Post-filter vs Pre-filter:**
-- Use **post-filter** (`SpiceDBAuthFilter`, `create_auth_node`) when users have access to most documents — semantic search quality is highest because all documents are candidates.
-- Use **pre-filter** (`SpiceDBPreFilterRetriever`, `create_pre_filter_auth_node`) when users have access to a small subset of a large corpus — avoids retrieving unauthorized content entirely.
+- Use **post-filter** (`SpiceDBAuthFilter`, `create_check_permissions_node`) when users have access to most documents — semantic search quality is highest because all documents are candidates.
+- Use **pre-filter** (`SpiceDBPreFilterRetriever`, `create_lookup_resources_node`) when users have access to a small subset of a large corpus — avoids retrieving unauthorized content entirely.
 
 **LangChain vs LangGraph:**
 - Use **LangChain** components (`SpiceDBAuthFilter`, `SpiceDBPreFilterRetriever`) for LCEL chains.
-- Use **LangGraph** components (`create_auth_node`, `create_pre_filter_auth_node`) for state graph workflows.
+- Use **LangGraph** components (`create_check_permissions_node`, `create_lookup_resources_node`) for state graph workflows.
 
 ### Example: Same Pipeline, Different Patterns
 
@@ -69,16 +69,16 @@ retriever = SpiceDBPreFilterRetriever(
 chain = retriever | prompt | llm
 ```
 
-**Pattern 3: create_auth_node (post-filter, LangGraph)**
+**Pattern 3: create_check_permissions_node (post-filter, LangGraph)**
 ```python
-graph.add_node("authorize", create_auth_node(...))
+graph.add_node("authorize", create_check_permissions_node(...))
 # Authorization metrics available in state['auth_results']
 ```
 
-**Pattern 4: create_pre_filter_auth_node (pre-filter, LangGraph)**
+**Pattern 4: create_lookup_resources_node (pre-filter, LangGraph)**
 ```python
 # Single node replaces separate retrieve + authorize nodes
-graph.add_node("retrieve_authorized", create_pre_filter_auth_node(
+graph.add_node("retrieve_authorized", create_lookup_resources_node(
     vector_store=vector_store,
     filter_factory=lambda ids: {"filter": {"article_id": {"$in": ids}}},
     ...
@@ -186,12 +186,12 @@ answer = await chain.ainvoke(
 
 ```python
 from langgraph.graph import StateGraph, END
-from langchain_spicedb import create_auth_node, RAGAuthState
+from langchain_spicedb import create_check_permissions_node, RAGAuthState
 
 graph = StateGraph(RAGAuthState)
 
 graph.add_node("retrieve", retrieve_node)
-graph.add_node("authorize", create_auth_node(
+graph.add_node("authorize", create_check_permissions_node(
     spicedb_endpoint="localhost:50051",
     spicedb_token="sometoken",
     resource_type="article",

@@ -3,11 +3,11 @@ import pytest
 from unittest.mock import AsyncMock, patch
 from langchain_core.documents import Document
 
-from langchain_spicedb import create_pre_filter_auth_node
+from langchain_spicedb import create_lookup_resources_node
 
 
 class TestCreatePreFilterAuthNode:
-    """Unit tests for create_pre_filter_auth_node."""
+    """Unit tests for create_lookup_resources_node."""
 
     @pytest.fixture
     def mock_vector_store(self):
@@ -30,8 +30,8 @@ class TestCreatePreFilterAuthNode:
             yield mock
 
     def test_returns_callable(self, mock_vector_store, filter_factory, mock_authorizer):
-        """create_pre_filter_auth_node returns a callable node."""
-        node = create_pre_filter_auth_node(
+        """create_lookup_resources_node returns a callable node."""
+        node = create_lookup_resources_node(
             vector_store=mock_vector_store,
             filter_factory=filter_factory,
             spicedb_endpoint="localhost:50051",
@@ -44,7 +44,7 @@ class TestCreatePreFilterAuthNode:
         self, mock_vector_store, filter_factory, mock_authorizer
     ):
         """Node reads subject_id from state and passes it to lookup_resources."""
-        node = create_pre_filter_auth_node(
+        node = create_lookup_resources_node(
             vector_store=mock_vector_store,
             filter_factory=filter_factory,
             spicedb_endpoint="localhost:50051",
@@ -60,7 +60,7 @@ class TestCreatePreFilterAuthNode:
         self, mock_vector_store, filter_factory, mock_authorizer
     ):
         """Node passes question + filter_factory output to asimilarity_search."""
-        node = create_pre_filter_auth_node(
+        node = create_lookup_resources_node(
             vector_store=mock_vector_store,
             filter_factory=filter_factory,
             spicedb_endpoint="localhost:50051",
@@ -81,7 +81,7 @@ class TestCreatePreFilterAuthNode:
         self, mock_vector_store, filter_factory, mock_authorizer
     ):
         """Node returns a state update dict with authorized_documents key."""
-        node = create_pre_filter_auth_node(
+        node = create_lookup_resources_node(
             vector_store=mock_vector_store,
             filter_factory=filter_factory,
             spicedb_endpoint="localhost:50051",
@@ -101,7 +101,7 @@ class TestCreatePreFilterAuthNode:
         """When lookup_resources returns [], node returns [] without querying the vector store."""
         mock_authorizer.return_value.lookup_resources = AsyncMock(return_value=[])
 
-        node = create_pre_filter_auth_node(
+        node = create_lookup_resources_node(
             vector_store=mock_vector_store,
             filter_factory=filter_factory,
             spicedb_endpoint="localhost:50051",
@@ -118,7 +118,7 @@ class TestCreatePreFilterAuthNode:
         self, mock_vector_store, filter_factory, mock_authorizer
     ):
         """Node raises ValueError when subject_id is absent from state."""
-        node = create_pre_filter_auth_node(
+        node = create_lookup_resources_node(
             vector_store=mock_vector_store,
             filter_factory=filter_factory,
             spicedb_endpoint="localhost:50051",
@@ -133,7 +133,7 @@ class TestCreatePreFilterAuthNode:
         self, mock_vector_store, filter_factory, mock_authorizer
     ):
         """Node raises ValueError when question is absent from state."""
-        node = create_pre_filter_auth_node(
+        node = create_lookup_resources_node(
             vector_store=mock_vector_store,
             filter_factory=filter_factory,
             spicedb_endpoint="localhost:50051",
@@ -148,7 +148,7 @@ class TestCreatePreFilterAuthNode:
         self, mock_vector_store, filter_factory, mock_authorizer
     ):
         """Node raises ValueError when subject_id is an empty string."""
-        node = create_pre_filter_auth_node(
+        node = create_lookup_resources_node(
             vector_store=mock_vector_store,
             filter_factory=filter_factory,
             spicedb_endpoint="localhost:50051",
@@ -163,7 +163,7 @@ class TestCreatePreFilterAuthNode:
         self, mock_vector_store, filter_factory, mock_authorizer
     ):
         """Node raises ValueError when question is an empty string."""
-        node = create_pre_filter_auth_node(
+        node = create_lookup_resources_node(
             vector_store=mock_vector_store,
             filter_factory=filter_factory,
             spicedb_endpoint="localhost:50051",
@@ -182,7 +182,7 @@ class TestCreatePreFilterAuthNode:
             side_effect=Exception("SpiceDB unavailable")
         )
 
-        node = create_pre_filter_auth_node(
+        node = create_lookup_resources_node(
             vector_store=mock_vector_store,
             filter_factory=filter_factory,
             spicedb_endpoint="localhost:50051",

@@ -337,11 +337,11 @@ Metrics are automatically available in the state under `auth_results`:
 
 ```python
 from langgraph.graph import StateGraph, END
-from langchain_spicedb import create_auth_node, RAGAuthState
+from langchain_spicedb import create_check_permissions_node, RAGAuthState
 
 graph = StateGraph(RAGAuthState)
 graph.add_node("retrieve", retrieve_node)
-graph.add_node("authorize", create_auth_node(
+graph.add_node("authorize", create_check_permissions_node(
     spicedb_endpoint="localhost:50051",
     spicedb_token="sometoken",
     resource_type="article",

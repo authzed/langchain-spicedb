@@ -42,8 +42,8 @@ examples/
 ├── prefilter_retriever_example.py     # SpiceDBPreFilterRetriever — pre-filter in LCEL chain
 ├── langchain_example.py               # SpiceDBAuthFilter — low-level LCEL usage
 ├── tool_example.py                    # SpiceDBPermissionTool / SpiceDBBulkPermissionTool
-├── langgraph_postfilter_example.py    # create_auth_node — post-filter in LangGraph
-└── langgraph_prefilter_example.py     # create_pre_filter_auth_node — pre-filter in LangGraph
+├── langgraph_postfilter_example.py    # create_check_permissions_node — post-filter in LangGraph
+└── langgraph_prefilter_example.py     # create_lookup_resources_node — pre-filter in LangGraph
 ```
 
 ---
@@ -98,7 +98,7 @@ OPENAI_API_KEY=sk-... python examples/tool_example.py
 
 ### `langgraph_postfilter_example.py` — Post-filter in LangGraph
 
-Uses `create_auth_node` in a 3-node LangGraph graph: `retrieve → authorize → generate`. The authorize node filters `retrieved_documents` from state and writes `authorized_documents` + `auth_results` (metrics) back to state.
+Uses `create_check_permissions_node` in a 3-node LangGraph graph: `retrieve → authorize → generate`. The authorize node filters `retrieved_documents` from state and writes `authorized_documents` + `auth_results` (metrics) back to state.
 
 ```bash
 python examples/langgraph_postfilter_example.py
@@ -111,7 +111,7 @@ SUBJECT_ID=tim python examples/langgraph_postfilter_example.py
 
 ### `langgraph_prefilter_example.py` — Pre-filter in LangGraph
 
-Uses `create_pre_filter_auth_node` in a 2-node graph: `retrieve_authorized → generate`. The single node calls `LookupResources` and runs the filtered vector search — no separate retrieve step.
+Uses `create_lookup_resources_node` in a 2-node graph: `retrieve_authorized → generate`. The single node calls `LookupResources` and runs the filtered vector search — no separate retrieve step.
 
 ```bash
 python examples/langgraph_prefilter_example.py

@@ -11,6 +11,7 @@ import asyncio
 import os
 from dotenv import load_dotenv
 from langchain_core.documents import Document
+from langchain_core.prompts import ChatPromptTemplate
 from langgraph.graph import StateGraph, END
 from authzed.api.v1 import (
     Client, WriteSchemaRequest, WriteRelationshipsRequest,
@@ -87,18 +88,30 @@ def retrieve_node(state: RAGAuthState) -> dict:
     return {"retrieved_documents": sample_docs}
 
 
-def generate_node(state: RAGAuthState) -> dict:
+async def generate_node(state: RAGAuthState) -> dict:
     """Generate answer from authorized documents"""
-    print(
-        f"🤖 [generate_node] Generating answer from {len(state['authorized_documents'])} authorized docs"
-    )
+    docs = state["authorized_documents"]
+    print(f"🤖 [generate_node] Generating answer from {len(docs)} authorized docs")
 
-    # For demo purposes, return a simple answer without calling LLM
-    # In production, you would:
-    # 1. Format context from state["authorized_documents"]
-    # 2. Create a prompt with the question and context
-    # 3. Call an LLM to generate the answer
-    answer = f"Based on {len(state['authorized_documents'])} authorized documents: [Answer would be generated here]"
+    context = "\n\n".join(doc.page_content for doc in docs)
+
+    openai_key = os.getenv("OPENAI_API_KEY")
+    if openai_key:
+        from langchain_openai import ChatOpenAI
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", "Answer the question using only the provided context. Be concise."),
+            ("human", "Question: {question}\n\nContext:\n{context}"),
+        ])
+        llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+        messages = prompt.format_messages(question=state["question"], context=context)
+        response = await llm.ainvoke(messages)
+        answer = response.content
+    else:
+        answer = (
+            f"[No OpenAI key — showing authorized context directly]\n\n"
+            f"Question: {state['question']}\n\n"
+            f"Authorized documents ({len(docs)}):\n{context}"
+        )
 
     return {"answer": answer}
 
@@ -215,7 +228,8 @@ async def main():
     print(
         f"  2. authorize_node   → authorized_documents: {len(result.get('authorized_documents', []))} docs"
     )
-    print(f"  3. generate_node    → answer: {result.get('answer', 'N/A')[:50]}...")
+    answer_preview = result.get("answer", "N/A")
+    print(f"  3. generate_node    → answer: {answer_preview}")
     print()
 
     # =========================================================================

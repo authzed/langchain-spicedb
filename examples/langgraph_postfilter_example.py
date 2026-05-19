@@ -252,45 +252,6 @@ async def main():
         print("❌ No authorization metrics found (node may not have executed)")
     print()
 
-    # =========================================================================
-    # METHOD 4: Compare With and Without Authorization Node
-    # =========================================================================
-
-    print("METHOD 4: Side-by-Side Comparison")
-    print("-" * 80)
-
-    graph_no_auth = StateGraph(RAGAuthState)
-    graph_no_auth.add_node("retrieve", retrieve_node)
-    graph_no_auth.add_node("generate", generate_node)
-    graph_no_auth.set_entry_point("retrieve")
-    graph_no_auth.add_edge("retrieve", "generate")
-    graph_no_auth.add_edge("generate", END)
-
-    print("Graph WITHOUT authorization:")
-    print(f"  Nodes: {list(graph_no_auth.nodes.keys())}")
-    print("  Flow:  retrieve → generate → END")
-    print()
-
-    print("Graph WITH authorization:")
-    print(f"  Nodes: {list(graph.nodes.keys())}")
-    print("  Flow:  retrieve → authorize → generate → END")
-    print()
-    print("✅ The 'authorize' node is the key difference!")
-    print()
-
-    # =========================================================================
-    # SUMMARY
-    # =========================================================================
-
-    print("=" * 80)
-    print("SUMMARY")
-    print("=" * 80)
-    print()
-    print("  1. ✅ Inspect graph.nodes — 'authorize' is in the node list")
-    print("  2. ✅ Inspect graph.edges — Flow includes retrieve → authorize → generate")
-    print("  3. ✅ Authorization metrics — Proof the node ran and checked permissions")
-    print("  4. ✅ Side-by-side comparison — Shows the authorization node difference")
-    print()
 
 
 if __name__ == "__main__":

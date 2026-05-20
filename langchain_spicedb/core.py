@@ -20,7 +20,7 @@ from authzed.api.v1 import (
     ObjectReference,
     SubjectReference,
 )
-from grpcutil import insecure_bearer_token_credentials
+from grpcutil import bearer_token_credentials, insecure_bearer_token_credentials
 
 
 @dataclass
@@ -103,8 +103,6 @@ class SpiceDBAuthorizer:
         self.use_tls = use_tls
 
         if use_tls:
-            from grpcutil import bearer_token_credentials
-
             self._credentials = bearer_token_credentials(spicedb_token)
         else:
             self._credentials = insecure_bearer_token_credentials(spicedb_token)

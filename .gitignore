@@ -21,6 +21,9 @@ wheels/
 *.egg
 duckduckgo.py
 
+## don't commit uv.lock because this is a library
+uv.lock
+
 # Virtual environments
 venv/
 env/

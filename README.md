@@ -167,19 +167,18 @@ auth = SpiceDBAuthFilter(
 )
 
 chain = (
-    RunnableParallel({
-        "context": retriever | auth,
-        "question": RunnablePassthrough(),
-    })
+    RunnableParallel(
+        {
+            "context": retriever | auth,
+            "question": RunnablePassthrough(),
+        }
+    )
     | prompt
     | llm
     | StrOutputParser()
 )
 
-answer = await chain.ainvoke(
-    "Your question?",
-    config={"configurable": {"subject_id": "alice"}}
-)
+answer = await chain.ainvoke("Your question?", config={"configurable": {"subject_id": "alice"}})
 ```
 
 ### 4. Use in LangGraph
@@ -191,12 +190,15 @@ from langchain_spicedb import create_check_permissions_node, RAGAuthState
 graph = StateGraph(RAGAuthState)
 
 graph.add_node("retrieve", retrieve_node)
-graph.add_node("authorize", create_check_permissions_node(
-    spicedb_endpoint="localhost:50051",
-    spicedb_token="sometoken",
-    resource_type="article",
-    resource_id_key="article_id",
-))
+graph.add_node(
+    "authorize",
+    create_check_permissions_node(
+        spicedb_endpoint="localhost:50051",
+        spicedb_token="sometoken",
+        resource_type="article",
+        resource_id_key="article_id",
+    ),
+)
 graph.add_node("generate", generate_node)
 
 graph.set_entry_point("retrieve")
@@ -205,10 +207,12 @@ graph.add_edge("authorize", "generate")
 graph.add_edge("generate", END)
 
 app = graph.compile()
-result = await app.ainvoke({
-    "question": "What is SpiceDB?",
-    "subject_id": "alice",
-})
+result = await app.ainvoke(
+    {
+        "question": "What is SpiceDB?",
+        "subject_id": "alice",
+    }
+)
 ```
 
 ## Documentation
@@ -236,10 +240,7 @@ auth = SpiceDBAuthFilter(
     permission="view",
 )
 
-authorized_docs = await auth.ainvoke(
-    docs,
-    config={"configurable": {"subject_id": "alice"}}
-)
+authorized_docs = await auth.ainvoke(docs, config={"configurable": {"subject_id": "alice"}})
 ```
 
 ### SpiceDBPreFilterRetriever
@@ -276,11 +277,7 @@ tool = SpiceDBPermissionTool(
     resource_type="article",
 )
 
-result = tool.invoke({
-    "subject_id": "alice",
-    "resource_id": "doc123",
-    "permission": "view"
-})
+result = tool.invoke({"subject_id": "alice", "resource_id": "doc123", "permission": "view"})
 # Returns: "true" or "false"
 ```
 
@@ -298,11 +295,9 @@ tool = SpiceDBBulkPermissionTool(
     resource_type="article",
 )
 
-result = tool.invoke({
-    "subject_id": "alice",
-    "resource_ids": "doc1,doc2,doc3",
-    "permission": "view"
-})
+result = tool.invoke(
+    {"subject_id": "alice", "resource_ids": "doc1,doc2,doc3", "permission": "view"}
+)
 # Returns: "alice can access: doc1, doc2" or "alice cannot access any..."
 ```
 

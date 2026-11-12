@@ -21,11 +21,11 @@ from langchain_spicedb import SpiceDBRetriever, SpiceDBAuthFilter, SpiceDBPermis
 # Basic configuration (all parameters required)
 config = {
     "spicedb_endpoint": "localhost:50051",  # SpiceDB server address
-    "spicedb_token": "sometoken",           # Pre-shared authentication key
-    "resource_type": "article",             # Resource type from schema
-    "subject_type": "user",                 # Subject type from schema (default: "user")
-    "permission": "view",                   # Permission to check (default: "view")
-    "resource_id_key": "article_id",        # Metadata key for resource ID
+    "spicedb_token": "sometoken",  # Pre-shared authentication key
+    "resource_type": "article",  # Resource type from schema
+    "subject_type": "user",  # Subject type from schema (default: "user")
+    "permission": "view",  # Permission to check (default: "view")
+    "resource_id_key": "article_id",  # Metadata key for resource ID
 }
 ```
 
@@ -36,8 +36,8 @@ from langchain_spicedb import SpiceDBRetriever
 
 retriever = SpiceDBRetriever(
     base_retriever=vector_store.as_retriever(),  # Your existing retriever
-    subject_id="alice",                          # User to authorize for
-    **config
+    subject_id="alice",  # User to authorize for
+    **config,
 )
 ```
 
@@ -48,14 +48,11 @@ from langchain_spicedb import SpiceDBAuthFilter
 
 auth_filter = SpiceDBAuthFilter(
     subject_id="alice",  # Can be set at runtime via config
-    **config
+    **config,
 )
 
 # Or configure per-request:
-result = await auth_filter.ainvoke(
-    docs,
-    config={"configurable": {"subject_id": "bob"}}
-)
+result = await auth_filter.ainvoke(docs, config={"configurable": {"subject_id": "bob"}})
 ```
 
 ### SpiceDBPermissionTool Configuration
@@ -63,16 +60,10 @@ result = await auth_filter.ainvoke(
 ```python
 from langchain_spicedb import SpiceDBPermissionTool
 
-tool = SpiceDBPermissionTool(
-    **config
-)
+tool = SpiceDBPermissionTool(**config)
 
 # Subject ID provided when invoking the tool
-result = tool.invoke({
-    "subject_id": "alice",
-    "resource_id": "doc123",
-    "permission": "view"
-})
+result = tool.invoke({"subject_id": "alice", "resource_id": "doc123", "permission": "view"})
 ```
 
 ## Advanced Configuration
@@ -104,15 +95,12 @@ Control behavior when SpiceDB is unavailable:
 # Denies access if SpiceDB is unreachable
 authorizer = SpiceDBAuthorizer(
     fail_open=False,  # Default
-    **config
+    **config,
 )
 
 # Fail Open (Development/Testing Only)
 # Allows access if SpiceDB is unreachable
-authorizer = SpiceDBAuthorizer(
-    fail_open=True,
-    **config
-)
+authorizer = SpiceDBAuthorizer(fail_open=True, **config)
 ```
 
 **Security Note**: Always use `fail_open=False` in production to ensure security.
@@ -132,10 +120,10 @@ Match your SpiceDB schema:
 authorizer = SpiceDBAuthorizer(
     spicedb_endpoint="localhost:50051",
     spicedb_token="sometoken",
-    resource_type="document",      # From schema
-    subject_type="organization",   # From schema
-    permission="read",             # From schema
-    resource_id_key="doc_id",      # Metadata key
+    resource_type="document",  # From schema
+    subject_type="organization",  # From schema
+    permission="read",  # From schema
+    resource_id_key="doc_id",  # Metadata key
 )
 ```
 
@@ -207,19 +195,13 @@ doc = Document(
         "article_id": "doc123",  # Must match resource_id_key
         "title": "Example Article",
         "author": "Alice",
-    }
+    },
 )
 
 # Multiple documents
 docs = [
-    Document(
-        page_content="Content 1",
-        metadata={"article_id": "doc1"}
-    ),
-    Document(
-        page_content="Content 2",
-        metadata={"article_id": "doc2"}
-    ),
+    Document(page_content="Content 1", metadata={"article_id": "doc1"}),
+    Document(page_content="Content 2", metadata={"article_id": "doc2"}),
 ]
 ```
 
@@ -254,7 +236,9 @@ Documents without the required metadata key are automatically denied:
 ```python
 docs = [
     Document(page_content="Doc 1", metadata={"article_id": "123"}),  # ✓ Will be checked
-    Document(page_content="Doc 2", metadata={"other_field": "value"}),  # ✗ Denied (missing article_id)
+    Document(
+        page_content="Doc 2", metadata={"other_field": "value"}
+    ),  # ✗ Denied (missing article_id)
 ]
 
 result = await auth_filter.ainvoke(docs, subject_id="alice")
@@ -324,11 +308,11 @@ for doc in result.authorized_documents:
 @dataclass
 class AuthorizationResult:
     authorized_documents: List[Document]  # Documents user can access
-    total_retrieved: int                  # Total documents checked
-    total_authorized: int                 # Number authorized
-    authorization_rate: float             # Percentage (0.0 to 1.0)
-    denied_resource_ids: List[str]        # IDs that were denied
-    check_latency_ms: float              # Time taken for checks
+    total_retrieved: int  # Total documents checked
+    total_authorized: int  # Number authorized
+    authorization_rate: float  # Percentage (0.0 to 1.0)
+    denied_resource_ids: List[str]  # IDs that were denied
+    check_latency_ms: float  # Time taken for checks
 ```
 
 ### LangGraph Integration
@@ -341,21 +325,21 @@ from langchain_spicedb import create_check_permissions_node, RAGAuthState
 
 graph = StateGraph(RAGAuthState)
 graph.add_node("retrieve", retrieve_node)
-graph.add_node("authorize", create_check_permissions_node(
-    spicedb_endpoint="localhost:50051",
-    spicedb_token="sometoken",
-    resource_type="article",
-    resource_id_key="article_id",
-))
+graph.add_node(
+    "authorize",
+    create_check_permissions_node(
+        spicedb_endpoint="localhost:50051",
+        spicedb_token="sometoken",
+        resource_type="article",
+        resource_id_key="article_id",
+    ),
+)
 graph.add_node("generate", generate_node)
 
 # ... add edges ...
 
 app = graph.compile()
-result = await app.ainvoke({
-    "question": "What is SpiceDB?",
-    "subject_id": "alice"
-})
+result = await app.ainvoke({"question": "What is SpiceDB?", "subject_id": "alice"})
 
 # Access metrics from state
 auth_metrics = result["auth_results"]
@@ -370,11 +354,11 @@ print(f"Latency: {auth_metrics['check_latency_ms']:.2f}ms")
 
 ```python
 auth_results = {
-    "total_retrieved": 10,               # Documents retrieved
-    "total_authorized": 7,               # Documents authorized
-    "authorization_rate": 0.7,           # 70% authorized
-    "denied_resource_ids": ["3", "5"],   # Denied doc IDs
-    "check_latency_ms": 45.2,           # Permission check time
+    "total_retrieved": 10,  # Documents retrieved
+    "total_authorized": 7,  # Documents authorized
+    "authorization_rate": 0.7,  # 70% authorized
+    "denied_resource_ids": ["3", "5"],  # Denied doc IDs
+    "check_latency_ms": 45.2,  # Permission check time
 }
 ```
 
@@ -387,20 +371,16 @@ from langchain_spicedb import SpiceDBPermissionTool, SpiceDBBulkPermissionTool
 
 # Single permission check
 permission_tool = SpiceDBPermissionTool(...)
-result = permission_tool.invoke({
-    "subject_id": "alice",
-    "resource_id": "doc123",
-    "permission": "view"
-})
+result = permission_tool.invoke(
+    {"subject_id": "alice", "resource_id": "doc123", "permission": "view"}
+)
 # Returns: "true" or "false"
 
 # Bulk permission check
 bulk_tool = SpiceDBBulkPermissionTool(...)
-result = bulk_tool.invoke({
-    "subject_id": "alice",
-    "resource_ids": "doc1,doc2,doc3",
-    "permission": "view"
-})
+result = bulk_tool.invoke(
+    {"subject_id": "alice", "resource_ids": "doc1,doc2,doc3", "permission": "view"}
+)
 # Returns: "alice can access: doc1, doc2" or "alice cannot access any of the requested resources"
 ```
 
@@ -577,9 +557,10 @@ result = await auth_filter.ainvoke(docs, subject_id="alice")
    ```python
    import re
 
+
    def sanitize_resource_id(raw_id: str) -> str:
        # Replace spaces and invalid chars with underscores
-       return re.sub(r'[^a-zA-Z0-9_/-]', '_', raw_id)
+       return re.sub(r"[^a-zA-Z0-9_/-]", "_", raw_id)
    ```
 
 2. Update metadata to use valid IDs
@@ -675,7 +656,7 @@ for doc in docs:
    ```python
    doc = Document(
        page_content="...",
-       metadata={"article_id": "123"}  # Required!
+       metadata={"article_id": "123"},  # Required!
    )
    ```
 
@@ -728,8 +709,8 @@ retriever = SpiceDBRetriever(
     resource_type="document",
     resource_id_key="doc_id",
     permission="view",
-    use_tls=True,       # Production TLS
-    fail_open=False,    # Fail closed (secure)
+    use_tls=True,  # Production TLS
+    fail_open=False,  # Fail closed (secure)
 )
 
 # Use in production

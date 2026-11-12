@@ -14,11 +14,11 @@ Use this pattern when users have access to a small fraction of a large corpus.
 
 import asyncio
 import os
-from typing import List
+
 from dotenv import load_dotenv
 from langchain_core.documents import Document
-from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableParallel, RunnablePassthrough
 from langchain_openai import ChatOpenAI
 
@@ -40,8 +40,8 @@ class MockVectorStore:
     """
 
     async def asimilarity_search(
-        self, query: str, k: int = 4, filter: dict = None
-    ) -> List[Document]:
+        self, query: str, k: int = 4, filter: dict | None = None
+    ) -> list[Document]:
         """Return mock documents, filtered by article_id if filter is provided."""
         all_docs = [
             Document(
@@ -113,8 +113,10 @@ async def main():
         [
             (
                 "system",
-                "Answer questions based only on the provided context. "
-                "If the context doesn't contain enough information, say so.",
+                (
+                    "Answer questions based only on the provided context. "
+                    "If the context doesn't contain enough information, say so."
+                ),
             ),
             ("human", "Question: {question}\n\nContext:\n{context}"),
         ]

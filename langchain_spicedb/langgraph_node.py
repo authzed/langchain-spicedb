@@ -5,7 +5,9 @@ This module provides functions to create LangGraph-compatible nodes
 for SpiceDB authorization that can be added to state graphs.
 """
 
-from typing import Any, Callable, Dict, TypedDict, Optional, List
+from collections.abc import Callable
+from typing import Any, TypedDict
+
 from .core import SpiceDBAuthorizer
 
 
@@ -29,15 +31,15 @@ class RAGAuthState(TypedDict, total=False):
     """
 
     # Input fields (required for authorization)
-    retrieved_documents: List[Any]
+    retrieved_documents: list[Any]
     subject_id: str
 
     # Output fields (set by authorization node)
-    authorized_documents: List[Any]
-    auth_results: Dict[str, Any]
+    authorized_documents: list[Any]
+    auth_results: dict[str, Any]
 
     # Optional configuration
-    auth_config: Dict[str, Any]
+    auth_config: dict[str, Any]
 
     # Common RAG fields (optional)
     question: str
@@ -95,7 +97,7 @@ def create_check_permissions_node(
         use_tls=use_tls,
     )
 
-    async def authorization_node(state: Dict[str, Any]) -> Dict[str, Any]:
+    async def authorization_node(state: dict[str, Any]) -> dict[str, Any]:
         """
         LangGraph node that filters documents based on SpiceDB permissions.
 
@@ -172,7 +174,7 @@ class AuthorizationNode:
         permission: str = "view",
         resource_id_key: str = "resource_id",
         use_tls: bool = False,
-        state_keys: Optional[Dict[str, str]] = None,
+        state_keys: dict[str, str] | None = None,
     ):
         """
         Initialize authorization node.
@@ -206,7 +208,7 @@ class AuthorizationNode:
         }
         self.state_keys = {**default_keys, **(state_keys or {})}
 
-    async def __call__(self, state: Dict[str, Any]) -> Dict[str, Any]:
+    async def __call__(self, state: dict[str, Any]) -> dict[str, Any]:
         """
         Process state through authorization.
 
@@ -250,7 +252,7 @@ class AuthorizationNode:
 
 def create_lookup_resources_node(
     vector_store: Any,
-    filter_factory: Callable[[List[str]], Dict[str, Any]],
+    filter_factory: Callable[[list[str]], dict[str, Any]],
     spicedb_endpoint: str = "localhost:50051",
     spicedb_token: str = "sometoken",
     resource_type: str = "document",
@@ -310,7 +312,7 @@ def create_lookup_resources_node(
         use_tls=use_tls,
     )
 
-    async def pre_filter_auth_node(state: Dict[str, Any]) -> Dict[str, Any]:
+    async def pre_filter_auth_node(state: dict[str, Any]) -> dict[str, Any]:
         subject_id = state.get("subject_id")
         if not subject_id:
             raise ValueError("subject_id must be present in state")

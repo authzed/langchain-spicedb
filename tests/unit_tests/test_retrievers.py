@@ -4,8 +4,9 @@ These tests validate the retriever in isolation using mocks, without requiring
 a real SpiceDB instance.
 """
 
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
 from langchain_core.documents import Document
 
 from langchain_spicedb import SpiceDBPreFilterRetriever
@@ -83,7 +84,7 @@ class TestSpiceDBAuthorizerLookupResources:
             mock_client_class.return_value = mock_client
 
             async def mock_stream_error():
-                raise Exception("SpiceDB timeout")
+                raise RuntimeError("SpiceDB timeout")
                 yield  # makes this an async generator; never reached
 
             mock_client.LookupResources = Mock(return_value=mock_stream_error())

@@ -53,7 +53,7 @@ except ImportError:
     _has_retrievers = False
 
 try:
-    from .tools import SpiceDBPermissionTool, SpiceDBBulkPermissionTool  # noqa: F401
+    from .tools import SpiceDBBulkPermissionTool, SpiceDBPermissionTool  # noqa: F401
 
     _has_tools = True
 except ImportError:
@@ -62,10 +62,10 @@ except ImportError:
 # Import LangGraph components (if available)
 try:
     from .langgraph_node import (  # noqa: F401
-        create_check_permissions_node,
-        create_lookup_resources_node,
         AuthorizationNode,
         RAGAuthState,
+        create_check_permissions_node,
+        create_lookup_resources_node,
     )
 
     _has_langgraph = True
@@ -82,14 +82,14 @@ if _has_retrievers:
     __all__.extend(["SpiceDBPreFilterRetriever"])
 
 if _has_tools:
-    __all__.extend(["SpiceDBPermissionTool", "SpiceDBBulkPermissionTool"])
+    __all__.extend(["SpiceDBBulkPermissionTool", "SpiceDBPermissionTool"])
 
 if _has_langgraph:
     __all__.extend(
         [
-            "create_check_permissions_node",
-            "create_lookup_resources_node",
             "AuthorizationNode",
             "RAGAuthState",
+            "create_check_permissions_node",
+            "create_lookup_resources_node",
         ]
     )

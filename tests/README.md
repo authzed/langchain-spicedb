@@ -111,8 +111,7 @@ Tests are automatically skipped if `SPICEDB_ENDPOINT` is not set:
     not os.getenv("SPICEDB_ENDPOINT"),
     reason="SPICEDB_ENDPOINT not set - skipping integration test",
 )
-def test_with_real_spicedb():
-    ...
+def test_with_real_spicedb(): ...
 ```
 
 ## Setting Up SpiceDB for Testing

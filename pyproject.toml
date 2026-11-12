@@ -7,7 +7,7 @@ name = "langchain-spicedb"
 version = "0.2.0"
 description = "SpiceDB authorization for LangChain RAG pipelines and agents - fine-grained access control for AI applications"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 license = "Apache-2.0"
 authors = [
     {name = "Sohan Maheshwar", email = "sohan.maheshwar@authzed.com"}
@@ -17,10 +17,11 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Security",
 ]
@@ -55,6 +56,11 @@ test = [
     "pytest-asyncio>=0.21.0",
     "pytest-mock>=3.12.0",
     "langchain-tests>=0.3.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff==0.17.2",
 ]
 
 [project.urls]

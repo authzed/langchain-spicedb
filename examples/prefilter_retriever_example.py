@@ -15,23 +15,24 @@ Schema and test data are written automatically at startup.
 
 import asyncio
 import os
-from dotenv import load_dotenv
-from langchain_core.documents import Document
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnableLambda, RunnableParallel, RunnablePassthrough
+
 from authzed.api.v1 import (
     Client,
-    WriteSchemaRequest,
-    WriteRelationshipsRequest,
     DeleteRelationshipsRequest,
-    RelationshipUpdate,
-    Relationship,
-    SubjectReference,
     ObjectReference,
+    Relationship,
     RelationshipFilter,
+    RelationshipUpdate,
+    SubjectReference,
+    WriteRelationshipsRequest,
+    WriteSchemaRequest,
 )
-from grpcutil import insecure_bearer_token_credentials, bearer_token_credentials
+from dotenv import load_dotenv
+from grpcutil import bearer_token_credentials, insecure_bearer_token_credentials
+from langchain_core.documents import Document
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnableLambda, RunnableParallel, RunnablePassthrough
 
 from langchain_spicedb import SpiceDBPreFilterRetriever
 
@@ -123,7 +124,7 @@ class MockVectorStore:
         self._docs = {d.metadata["article_id"]: d for d in docs}
 
     async def asimilarity_search(
-        self, query: str, k: int = 4, filter: dict = None, **kwargs
+        self, query: str, k: int = 4, filter: dict | None = None, **kwargs
     ) -> list:
         if filter and "article_id" in filter:
             allowed_ids = set(filter["article_id"]["$in"])
@@ -220,8 +221,10 @@ async def main():
         [
             (
                 "system",
-                "Answer the question based only on the provided context. "
-                "If the context doesn't contain enough information, say so.",
+                (
+                    "Answer the question based only on the provided context. "
+                    "If the context doesn't contain enough information, say so."
+                ),
             ),
             ("human", "Question: {question}\n\nContext:\n{context}"),
         ]

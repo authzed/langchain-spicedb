@@ -5,9 +5,11 @@ This module provides LangChain tools that agents can use to check
 SpiceDB permissions before taking actions.
 """
 
-from typing import Optional, Type, Any
-from pydantic import BaseModel, Field
+from typing import Any
+
 from langchain_core.tools import BaseTool
+from pydantic import BaseModel, Field
+
 from .core import SpiceDBAuthorizer
 
 
@@ -27,7 +29,7 @@ class SpiceDBAuthTool(BaseTool):
     subject_type: str = Field(default="user", description="SpiceDB subject type")
     use_tls: bool = Field(default=False, description="Whether to use TLS for SpiceDB connection")
 
-    _authorizer: Optional[SpiceDBAuthorizer] = None
+    _authorizer: SpiceDBAuthorizer | None = None
 
     def __init__(
         self,
@@ -131,7 +133,7 @@ class SpiceDBPermissionTool(SpiceDBAuthTool):
     - resource_id: ONLY the ID portion (e.g., '123', 'doc1', 'article-456')
     - permission: Permission to check (e.g., 'view', 'edit')
     """
-    args_schema: Type[BaseModel] = SpiceDBPermissionInput
+    args_schema: type[BaseModel] = SpiceDBPermissionInput
 
     def _run(
         self,
@@ -227,7 +229,7 @@ class SpiceDBBulkPermissionTool(SpiceDBAuthTool):
     - resource_ids: Comma-separated IDs (ONLY ID portions, e.g., '123,456,789')
     - permission: Permission to check (default: 'view')
     """
-    args_schema: Type[BaseModel] = SpiceDBBulkPermissionInput
+    args_schema: type[BaseModel] = SpiceDBBulkPermissionInput
 
     def _run(
         self,

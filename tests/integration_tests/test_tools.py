@@ -5,19 +5,20 @@ Set environment variables SPICEDB_ENDPOINT and SPICEDB_TOKEN to run these tests.
 """
 
 import os
+
 import pytest
 from authzed.api.v1 import (
-    SyncClient,
     ObjectReference,
     Relationship,
     RelationshipUpdate,
     SubjectReference,
+    SyncClient,
     WriteRelationshipsRequest,
     WriteSchemaRequest,
 )
 from grpcutil import insecure_bearer_token_credentials
 
-from langchain_spicedb import SpiceDBPermissionTool, SpiceDBBulkPermissionTool
+from langchain_spicedb import SpiceDBBulkPermissionTool, SpiceDBPermissionTool
 
 SCHEMA = """
 definition user {}

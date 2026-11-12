@@ -9,13 +9,14 @@ or vector store (Pinecone, FAISS, Weaviate, etc.).
 import asyncio
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from authzed.api.v1 import (
-    Client,
-    CheckPermissionRequest,
-    CheckPermissionResponse,
     CheckBulkPermissionsRequest,
     CheckBulkPermissionsRequestItem,
+    CheckPermissionRequest,
+    CheckPermissionResponse,
+    Client,
     LookupResourcesRequest,
     ObjectReference,
     SubjectReference,
@@ -37,14 +38,14 @@ class AuthorizationResult:
         check_latency_ms: Total time spent on authorization checks in milliseconds
     """
 
-    authorized_documents: List[Any]
+    authorized_documents: list[Any]
     total_retrieved: int
     total_authorized: int
     authorization_rate: float
-    denied_resource_ids: List[str] = field(default_factory=list)
+    denied_resource_ids: list[str] = field(default_factory=list)
     check_latency_ms: float = 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization"""
         return {
             "total_retrieved": self.total_retrieved,
@@ -114,8 +115,8 @@ class SpiceDBAuthorizer:
         # The client is also recreated when the event loop changes, because grpc.aio
         # channels are bound to the loop they were created in. Each asyncio.run() call
         # creates a new loop, so multi-call sync usage requires a fresh client per loop.
-        self._client: Optional[Client] = None
-        self._client_loop: Optional[asyncio.AbstractEventLoop] = None
+        self._client: Client | None = None
+        self._client_loop: asyncio.AbstractEventLoop | None = None
 
     @property
     def client(self) -> Client:
@@ -131,11 +132,11 @@ class SpiceDBAuthorizer:
 
     async def filter_documents(
         self,
-        documents: List[Any],
+        documents: list[Any],
         subject_id: str,
-        subject_type: Optional[str] = None,
-        resource_type: Optional[str] = None,
-        permission: Optional[str] = None,
+        subject_type: str | None = None,
+        resource_type: str | None = None,
+        permission: str | None = None,
         include_metrics: bool = True,
     ) -> AuthorizationResult:
         """
@@ -199,7 +200,7 @@ class SpiceDBAuthorizer:
         # Filter documents
         authorized_documents = [doc_resource_map[rid] for rid in authorized_ids]
 
-        denied_ids = [rid for rid in doc_resource_map.keys() if rid not in authorized_ids]
+        denied_ids = [rid for rid in doc_resource_map if rid not in authorized_ids]
 
         check_latency_ms = (time.time() - start_time) * 1000
 
@@ -216,9 +217,9 @@ class SpiceDBAuthorizer:
         self,
         subject_id: str,
         resource_id: str,
-        subject_type: Optional[str] = None,
-        resource_type: Optional[str] = None,
-        permission: Optional[str] = None,
+        subject_type: str | None = None,
+        resource_type: str | None = None,
+        permission: str | None = None,
     ) -> bool:
         """
         Check if a subject has permission for a single resource.
@@ -258,10 +259,10 @@ class SpiceDBAuthorizer:
     async def lookup_resources(
         self,
         subject_id: str,
-        subject_type: Optional[str] = None,
-        resource_type: Optional[str] = None,
-        permission: Optional[str] = None,
-    ) -> List[str]:
+        subject_type: str | None = None,
+        resource_type: str | None = None,
+        permission: str | None = None,
+    ) -> list[str]:
         """
         Look up all resources a subject has permission to access.
 
@@ -308,10 +309,10 @@ class SpiceDBAuthorizer:
         self,
         subject_id: str,
         subject_type: str,
-        resource_ids: List[str],
+        resource_ids: list[str],
         resource_type: str,
         permission: str,
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Check permissions for multiple resources using SpiceDB's native bulk API.
 
@@ -358,7 +359,7 @@ class SpiceDBAuthorizer:
 
         return authorized_ids
 
-    def _get_resource_id(self, doc: Any) -> Optional[str]:
+    def _get_resource_id(self, doc: Any) -> str | None:
         """
         Extract resource ID from document metadata.
 

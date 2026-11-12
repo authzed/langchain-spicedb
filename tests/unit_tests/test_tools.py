@@ -4,11 +4,12 @@ These tests validate the tools in isolation using mocks, without requiring
 a real SpiceDB instance.
 """
 
-import pytest
 from unittest.mock import AsyncMock, patch
+
+import pytest
 from langchain_core.tools import BaseTool
 
-from langchain_spicedb import SpiceDBPermissionTool, SpiceDBBulkPermissionTool
+from langchain_spicedb import SpiceDBBulkPermissionTool, SpiceDBPermissionTool
 
 
 class TestSpiceDBPermissionToolUnit:

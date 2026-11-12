@@ -5,11 +5,14 @@ This module provides a LangChain BaseRetriever implementation that uses
 SpiceDB's LookupResources API to pre-filter documents before vector search.
 """
 
-from typing import List, Optional, Any, Callable, Dict
-from pydantic import ConfigDict
-from langchain_core.retrievers import BaseRetriever
-from langchain_core.documents import Document
+from collections.abc import Callable
+from typing import Any
+
 from langchain_core.callbacks import CallbackManagerForRetrieverRun
+from langchain_core.documents import Document
+from langchain_core.retrievers import BaseRetriever
+from pydantic import ConfigDict
+
 from .core import SpiceDBAuthorizer
 
 
@@ -48,7 +51,7 @@ class SpiceDBPreFilterRetriever(BaseRetriever):
     vector_store: Any
     """The vector store to search after pre-filtering by authorized IDs."""
 
-    filter_factory: Callable[[List[str]], Dict[str, Any]]
+    filter_factory: Callable[[list[str]], dict[str, Any]]
     """
     Required. Converts a list of authorized resource IDs into search_kwargs
     for the vector store's similarity_search call.
@@ -84,13 +87,13 @@ class SpiceDBPreFilterRetriever(BaseRetriever):
     k: int = 4
     """Number of documents to retrieve from the vector store."""
 
-    _authorizer: Optional[SpiceDBAuthorizer] = None
+    _authorizer: SpiceDBAuthorizer | None = None
     """Internal SpiceDB authorizer instance."""
 
     def __init__(
         self,
         vector_store: Any,
-        filter_factory: Callable[[List[str]], Dict[str, Any]],
+        filter_factory: Callable[[list[str]], dict[str, Any]],
         subject_id: str,
         spicedb_endpoint: str = "localhost:50051",
         spicedb_token: str = "sometoken",
@@ -144,7 +147,7 @@ class SpiceDBPreFilterRetriever(BaseRetriever):
         query: str,
         *,
         run_manager: CallbackManagerForRetrieverRun,
-    ) -> List[Document]:
+    ) -> list[Document]:
         """Synchronous retrieval — delegates to async implementation."""
         import asyncio
 
@@ -155,7 +158,7 @@ class SpiceDBPreFilterRetriever(BaseRetriever):
         query: str,
         *,
         run_manager: CallbackManagerForRetrieverRun,
-    ) -> List[Document]:
+    ) -> list[Document]:
         """
         Pre-filter then retrieve documents.
 
@@ -176,7 +179,7 @@ class SpiceDBPreFilterRetriever(BaseRetriever):
 
     def with_config(
         self,
-        subject_id: Optional[str] = None,
+        subject_id: str | None = None,
         **kwargs: Any,
     ) -> "SpiceDBPreFilterRetriever":
         """

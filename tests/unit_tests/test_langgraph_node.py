@@ -1,7 +1,8 @@
 """Unit tests for LangGraph authorization nodes."""
 
-import pytest
 from unittest.mock import AsyncMock, patch
+
+import pytest
 from langchain_core.documents import Document
 
 from langchain_spicedb import create_lookup_resources_node

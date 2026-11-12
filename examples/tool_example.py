@@ -12,21 +12,22 @@ The tool allows agents to:
 
 import asyncio
 import os
-from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
-from langchain.agents import create_agent
+
 from authzed.api.v1 import (
     Client,
-    WriteSchemaRequest,
-    WriteRelationshipsRequest,
-    RelationshipUpdate,
-    Relationship,
-    SubjectReference,
     ObjectReference,
+    Relationship,
+    RelationshipUpdate,
+    SubjectReference,
+    WriteRelationshipsRequest,
+    WriteSchemaRequest,
 )
-from grpcutil import insecure_bearer_token_credentials, bearer_token_credentials
+from dotenv import load_dotenv
+from grpcutil import bearer_token_credentials, insecure_bearer_token_credentials
+from langchain.agents import create_agent
+from langchain_openai import ChatOpenAI
 
-from langchain_spicedb import SpiceDBPermissionTool, SpiceDBBulkPermissionTool
+from langchain_spicedb import SpiceDBBulkPermissionTool, SpiceDBPermissionTool
 
 load_dotenv()
 

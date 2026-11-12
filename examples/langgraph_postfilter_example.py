@@ -9,22 +9,23 @@ Schema and test data are written automatically at startup.
 
 import asyncio
 import os
-from dotenv import load_dotenv
-from langchain_core.documents import Document
-from langchain_core.prompts import ChatPromptTemplate
-from langgraph.graph import StateGraph, END
+
 from authzed.api.v1 import (
     Client,
-    WriteSchemaRequest,
-    WriteRelationshipsRequest,
-    RelationshipUpdate,
-    Relationship,
-    SubjectReference,
     ObjectReference,
+    Relationship,
+    RelationshipUpdate,
+    SubjectReference,
+    WriteRelationshipsRequest,
+    WriteSchemaRequest,
 )
-from grpcutil import insecure_bearer_token_credentials, bearer_token_credentials
+from dotenv import load_dotenv
+from grpcutil import bearer_token_credentials, insecure_bearer_token_credentials
+from langchain_core.documents import Document
+from langchain_core.prompts import ChatPromptTemplate
+from langgraph.graph import END, StateGraph
 
-from langchain_spicedb import create_check_permissions_node, RAGAuthState
+from langchain_spicedb import RAGAuthState, create_check_permissions_node
 
 load_dotenv()
 

@@ -5,10 +5,12 @@ This module provides a LangChain Runnable interface to the SpiceDB authorizer,
 allowing it to be seamlessly integrated into LangChain chains.
 """
 
-from typing import Any, Dict, List, Optional, Union
-from langchain_core.runnables import Runnable, RunnableConfig
+from typing import Any
+
 from langchain_core.documents import Document
-from .core import SpiceDBAuthorizer, AuthorizationResult
+from langchain_core.runnables import Runnable, RunnableConfig
+
+from .core import AuthorizationResult, SpiceDBAuthorizer
 
 
 class SpiceDBAuthFilter(Runnable):
@@ -48,7 +50,7 @@ class SpiceDBAuthFilter(Runnable):
         permission: str = "view",
         resource_id_key: str = "resource_id",
         use_tls: bool = False,
-        subject_id: Optional[str] = None,
+        subject_id: str | None = None,
         return_metrics: bool = False,
     ):
         """
@@ -80,9 +82,9 @@ class SpiceDBAuthFilter(Runnable):
 
     def invoke(
         self,
-        input: Union[List[Document], Dict[str, Any]],
-        config: Optional[RunnableConfig] = None,
-    ) -> Union[List[Document], AuthorizationResult]:
+        input: list[Document] | dict[str, Any],
+        config: RunnableConfig | None = None,
+    ) -> list[Document] | AuthorizationResult:
         """
         Synchronous invocation (not recommended, use ainvoke instead).
         """
@@ -92,9 +94,9 @@ class SpiceDBAuthFilter(Runnable):
 
     async def ainvoke(
         self,
-        input: Union[List[Document], Dict[str, Any]],
-        config: Optional[RunnableConfig] = None,
-    ) -> Union[List[Document], AuthorizationResult]:
+        input: list[Document] | dict[str, Any],
+        config: RunnableConfig | None = None,
+    ) -> list[Document] | AuthorizationResult:
         """
         Filter documents based on SpiceDB permissions.
 
@@ -111,7 +113,7 @@ class SpiceDBAuthFilter(Runnable):
         elif isinstance(input, dict):
             documents = input.get("documents", input.get("docs", []))
         else:
-            raise ValueError(f"Unsupported input type: {type(input)}")
+            raise ValueError(f"Unsupported input type: {type(input)}")  # noqa: TRY004 -- public API; switching to TypeError would break callers
 
         # Get subject_id from config or use default
         subject_id = self._get_subject_id(config)
@@ -134,7 +136,7 @@ class SpiceDBAuthFilter(Runnable):
         else:
             return result.authorized_documents
 
-    def _get_subject_id(self, config: Optional[RunnableConfig]) -> Optional[str]:
+    def _get_subject_id(self, config: RunnableConfig | None) -> str | None:
         """Extract subject_id from config or use default."""
         if config and "configurable" in config:
             subject_id = config["configurable"].get("subject_id")
@@ -142,7 +144,7 @@ class SpiceDBAuthFilter(Runnable):
                 return subject_id
         return self.default_subject_id
 
-    def with_config(self, subject_id: Optional[str] = None, **kwargs) -> "SpiceDBAuthFilter":
+    def with_config(self, subject_id: str | None = None, **kwargs) -> "SpiceDBAuthFilter":
         """
         Create a new instance with updated configuration.
 

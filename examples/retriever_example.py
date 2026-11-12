@@ -10,11 +10,12 @@ The filter is reusable across users — pass subject_id at call time via config.
 
 import asyncio
 import os
+
 from dotenv import load_dotenv
 from langchain_core.documents import Document
-from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnableParallel, RunnablePassthrough, RunnableLambda
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnableLambda, RunnableParallel, RunnablePassthrough
 from langchain_openai import ChatOpenAI
 
 from langchain_spicedb import SpiceDBAuthFilter
@@ -68,8 +69,10 @@ async def main():
         [
             (
                 "system",
-                "Answer the question based only on the provided context. "
-                "If you don't have enough information, say so.",
+                (
+                    "Answer the question based only on the provided context. "
+                    "If you don't have enough information, say so."
+                ),
             ),
             ("human", "Question: {question}\n\nContext:\n{context}"),
         ]

@@ -23,18 +23,22 @@ from langchain_core.prompts import ChatPromptTemplate
 # Use the provided RAGAuthState TypedDict
 graph = StateGraph(RAGAuthState)
 
+
 # Define your nodes
 def retrieve_node(state):
     """Retrieve documents from vector store"""
     docs = retriever.invoke(state["question"])
     return {"retrieved_documents": docs}
 
+
 def generate_node(state):
     """Generate answer from authorized documents"""
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", "Answer based only on the provided context."),
-        ("human", "Question: {question}\n\nContext:\n{context}")
-    ])
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", "Answer based only on the provided context."),
+            ("human", "Question: {question}\n\nContext:\n{context}"),
+        ]
+    )
 
     context = "\n\n".join([doc.page_content for doc in state["authorized_documents"]])
     llm = ChatOpenAI(model="gpt-4o-mini")
@@ -43,14 +47,18 @@ def generate_node(state):
 
     return {"answer": answer.content}
 
+
 # Add nodes
 graph.add_node("retrieve", retrieve_node)
-graph.add_node("authorize", create_check_permissions_node(
-    spicedb_endpoint="localhost:50051",
-    spicedb_token="sometoken",
-    resource_type="article",
-    resource_id_key="article_id",
-))
+graph.add_node(
+    "authorize",
+    create_check_permissions_node(
+        spicedb_endpoint="localhost:50051",
+        spicedb_token="sometoken",
+        resource_type="article",
+        resource_id_key="article_id",
+    ),
+)
 graph.add_node("generate", generate_node)
 
 # Wire it up
@@ -61,10 +69,12 @@ graph.add_edge("generate", END)
 
 # Compile and run
 app = graph.compile()
-result = await app.ainvoke({
-    "question": "What is SpiceDB?",
-    "subject_id": "alice",
-})
+result = await app.ainvoke(
+    {
+        "question": "What is SpiceDB?",
+        "subject_id": "alice",
+    }
+)
 
 print(result["answer"])
 ```
@@ -101,11 +111,14 @@ Add custom fields to track additional state like conversation history, user pref
 ```python
 from langchain_spicedb import RAGAuthState
 
+
 class ConversationalRAGState(RAGAuthState):
     """Extend with your own fields"""
+
     conversation_history: list  # Track previous Q&A
-    user_preferences: dict      # User settings
-    session_id: str            # Session tracking
+    user_preferences: dict  # User settings
+    session_id: str  # Session tracking
+
 
 graph = StateGraph(ConversationalRAGState)
 # ... add nodes and edges
@@ -186,6 +199,7 @@ Create a factory function to generate configured authorization nodes:
 ```python
 from langchain_spicedb import AuthorizationNode
 
+
 def create_article_auth(spicedb_config: dict) -> AuthorizationNode:
     """Factory for article authorization nodes"""
     return AuthorizationNode(
@@ -195,6 +209,7 @@ def create_article_auth(spicedb_config: dict) -> AuthorizationNode:
         resource_id_key="article_id",
         permission="view",
     )
+
 
 # Use in multiple graphs
 config = {"endpoint": "localhost:50051", "token": "sometoken"}
@@ -296,11 +311,11 @@ The authorization node automatically adds metrics to the state under the `auth_r
 
 ```python
 {
-    "total_retrieved": 10,           # Documents retrieved
-    "total_authorized": 7,           # Documents authorized
-    "authorization_rate": 0.7,       # Percentage authorized
+    "total_retrieved": 10,  # Documents retrieved
+    "total_authorized": 7,  # Documents authorized
+    "authorization_rate": 0.7,  # Percentage authorized
     "denied_resource_ids": ["3", "5", "8"],  # Denied doc IDs
-    "check_latency_ms": 45.2,       # Permission check time
+    "check_latency_ms": 45.2,  # Permission check time
 }
 ```
 
@@ -321,6 +336,7 @@ def should_authorize(state):
         return "generate"
     return "authorize"
 
+
 graph.add_conditional_edges("retrieve", should_authorize)
 graph.add_node("authorize", create_check_permissions_node(...))
 ```
@@ -335,6 +351,7 @@ def check_authorized_count(state):
     if len(state["authorized_documents"]) == 0:
         return "fallback"
     return "generate"
+
 
 graph.add_conditional_edges("authorize", check_authorized_count)
 graph.add_node("fallback", fallback_node)

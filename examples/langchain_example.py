@@ -7,11 +7,12 @@ into a LangChain chain using the pipe operator.
 
 import asyncio
 import os
+
 from dotenv import load_dotenv
 from langchain_core.documents import Document
-from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnableParallel, RunnablePassthrough, RunnableLambda
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnableLambda, RunnableParallel, RunnablePassthrough
 from langchain_openai import ChatOpenAI
 
 from langchain_spicedb import SpiceDBAuthFilter

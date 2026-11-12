@@ -5,6 +5,7 @@ Set SPICEDB_ENDPOINT and SPICEDB_TOKEN to run these tests.
 """
 
 import os
+
 import pytest
 
 
